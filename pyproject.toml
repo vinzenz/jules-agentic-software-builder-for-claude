@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-builder"
+version = "0.1.0"
+description = "Multi-agent orchestration framework for mobile app development"
+authors = [{name = "Jules", email = "jules@example.com"}]
+dependencies = [
+    "typer>=0.9.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+    "ruff>=0.1.0"
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+agentic-builder = "agentic_builder.main:app"
+
+[tool.setuptools]
+packages = ["agentic_builder"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = "."
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
