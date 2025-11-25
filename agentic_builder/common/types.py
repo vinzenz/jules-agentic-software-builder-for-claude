@@ -68,6 +68,10 @@ class Task(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     context_files: List[str] = Field(default_factory=list)
+    # Store agent output for passing context to dependent agents
+    output_summary: Optional[str] = None
+    output_next_steps: List[str] = Field(default_factory=list)
+    output_warnings: List[str] = Field(default_factory=list)
 
 
 class SessionData(BaseModel):

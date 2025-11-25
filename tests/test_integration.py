@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch
+from unittest.mock import patch, ANY
 
 import pytest
 
@@ -20,8 +20,9 @@ def test_git_manager_create_branch():
     # In mock mode or unit test, we might just verify subprocess calls
     with patch("subprocess.run") as mock_run:
         gm.create_branch("feature/test")
+        # Verify the git command is correct (cwd is set to project root)
         mock_run.assert_called_with(
-            ["git", "checkout", "-b", "feature/test"], check=True, capture_output=True, text=True
+            ["git", "checkout", "-b", "feature/test"], check=True, capture_output=True, text=True, cwd=ANY
         )
 
 

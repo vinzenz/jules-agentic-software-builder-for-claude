@@ -36,8 +36,41 @@ def test_dependency_resolution(task_manager):
 
 def test_context_serializer():
     task = Task(id="TASK-001", description="Do something", agent_type=AgentType.PM, dependencies=[])
-    xml = ContextSerializer.serialize(task, dependency_outputs={})
+    xml = ContextSerializer.serialize(task, dependency_tasks={})
 
     assert "<task_context>" in xml
     assert "<task_id>TASK-001</task_id>" in xml
     assert "Do something" in xml
+
+
+def test_context_serializer_with_dependencies():
+    # Create a dependency task with output
+    dep_task = Task(
+        id="TASK-001",
+        description="PM task",
+        agent_type=AgentType.PM,
+        context_files=["/path/to/file.py"],
+        output_summary="Created project structure",
+        output_next_steps=["Review architecture", "Start implementation"],
+        output_warnings=["Consider security implications"],
+    )
+
+    # Create the main task that depends on the PM task
+    task = Task(
+        id="TASK-002",
+        description="Architect task",
+        agent_type=AgentType.ARCHITECT,
+        dependencies=["TASK-001"],
+    )
+
+    xml = ContextSerializer.serialize(task, dependency_tasks={"TASK-001": dep_task})
+
+    # Verify task info is present
+    assert "<task_id>TASK-002</task_id>" in xml
+    assert "agent='PM'" in xml
+
+    # Verify dependency output is included
+    assert "Created project structure" in xml
+    assert "Review architecture" in xml
+    assert "Consider security implications" in xml
+    assert "/path/to/file.py" in xml

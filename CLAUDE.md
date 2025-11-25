@@ -116,15 +116,24 @@ Agents write files directly to disk and only report file paths in their XML resp
 <warnings>- Warning if any</warnings>
 ```
 
-**Context Passed to Agents** (file paths only, not content):
+**Context Passed to Agents** (includes previous agent outputs):
 ```xml
 <task_context>
-  <task_id>TASK-0001</task_id>
+  <task_id>TASK-0003</task_id>
   <agent_role>DEV_FRONTEND</agent_role>
   <description>Execute DEV_FRONTEND phase</description>
   <dependencies>
-    <dependency id='TASK-0002'>
-      <file path='/path/to/file.py'/>
+    <dependency id='TASK-0002' agent='TL_FRONTEND'>
+      <summary>Designed component architecture...</summary>
+      <artifacts>
+        <artifact path='/path/to/design.md'/>
+      </artifacts>
+      <next_steps>
+        <step>Implement React components</step>
+      </next_steps>
+      <warnings>
+        <warning>Consider mobile responsiveness</warning>
+      </warnings>
     </dependency>
   </dependencies>
 </task_context>
