@@ -4,6 +4,7 @@ import subprocess
 from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
 from agentic_builder.agents.response_parser import ResponseParser
 from agentic_builder.common.types import AgentOutput, AgentType, ModelTier
+from agentic_builder.common.utils import get_project_root
 
 
 class ClaudeClient:
@@ -24,13 +25,18 @@ class ClaudeClient:
         # Use stdin for user input to avoid ARG_MAX limits with large context
         cmd = ["claude", "-m", model.value, "-s", system_prompt, "-p", prompt, "-"]
 
+        # Run Claude CLI in the project root directory so agents write files
+        # to the correct location when using relative paths
+        project_root = get_project_root()
+
         try:
             result = subprocess.run(
                 cmd,
                 input=user_input,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                cwd=project_root,  # Ensure agent writes files relative to project root
             )
             return ResponseParser.parse(result.stdout)
         except subprocess.CalledProcessError as e:
