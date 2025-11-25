@@ -6,6 +6,22 @@ This document defines which sub-agents are available to each main agent for dele
 
 Main agents can delegate specialized tasks to sub-agents using the orchestrator skill. Sub-agents are defined in `.claude/agents/` and provide focused expertise for specific tasks.
 
+## Sub-Agent Inventory (30 Total)
+
+| Category | Sub-Agents |
+|----------|------------|
+| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, **performance-analyzer** |
+| Design | api-designer, data-modeler, wireframe-generator, design-system-creator, **protocol-schema-generator** |
+| Code Generation | component-generator, controller-generator, model-generator, api-client-generator |
+| Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
+| Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
+| Security | security-scanner, dependency-auditor |
+| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator, k8s-manifest-generator, **platform-manifest-generator** |
+| Localization | **localization-generator** |
+| Architecture | tech-stack-evaluator |
+
+*New sub-agents in **bold***
+
 ## Universal Agent Mappings
 
 ### PM (Project Manager)
@@ -22,7 +38,8 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 |-----------|---------|----------|
 | tech-stack-evaluator | Evaluate technology choices | First |
 | data-modeler | Design database schemas | After tech-stack |
-| api-designer | Design API specifications | After data-modeler |
+| api-designer | Design API specifications (REST, GraphQL, gRPC) | After data-modeler |
+| protocol-schema-generator | Generate Protocol Buffer/binary schemas | After api-designer |
 
 ### UIUX (UI/UX Designer)
 
@@ -47,6 +64,7 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 |-----------|---------|----------|
 | complexity-analyzer | Analyze code complexity metrics | Yes |
 | lint-analyzer | Analyze and categorize lint issues | Yes |
+| performance-analyzer | Identify performance issues | Yes |
 | code-documentation-generator | Generate documentation | After analysis |
 
 ### SR (Security Reviewer)
@@ -71,24 +89,27 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| component-generator | Generate component boilerplate | Yes |
+| component-generator | Generate web component boilerplate (React, Vue, Svelte, Angular) | Yes |
 | api-client-generator | Generate API client code | Yes |
 | accessibility-checker | Check accessibility | After components |
+| localization-generator | Set up i18n infrastructure | Yes |
 
 ### TL_UI_MOBILE / DEV_UI_MOBILE
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| component-generator | Generate mobile component structure | Yes |
+| component-generator | Generate mobile components (React Native, Flutter, SwiftUI, Compose) | Yes |
 | api-client-generator | Generate API client code | Yes |
 | accessibility-checker | Check accessibility | After components |
+| localization-generator | Set up i18n for mobile | Yes |
 
 ### TL_UI_DESKTOP / DEV_UI_DESKTOP
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| component-generator | Generate desktop component structure | Yes |
+| component-generator | Generate desktop components (Qt, Electron, WPF, GTK) | Yes |
 | wireframe-generator | Generate window layouts | Yes |
+| localization-generator | Set up i18n for desktop | Yes |
 
 ### TL_UI_CLI / DEV_UI_CLI
 
@@ -96,6 +117,7 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 |-----------|---------|----------|
 | api-designer | Design CLI command structure | Yes |
 | code-documentation-generator | Generate help text and man pages | After impl |
+| localization-generator | Set up i18n for CLI messages | Yes |
 
 ## Core Layer Agent Mappings
 
@@ -103,7 +125,8 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| api-designer | Design API endpoints | First |
+| api-designer | Design API endpoints (REST, GraphQL, gRPC) | First |
+| protocol-schema-generator | Generate Protocol Buffer definitions | After design |
 | controller-generator | Generate API controllers | After design |
 | model-generator | Generate data models | After design |
 
@@ -111,7 +134,8 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| complexity-analyzer | Analyze algorithm complexity | Yes |
+| complexity-analyzer | Analyze algorithmic complexity | Yes |
+| performance-analyzer | Analyze memory, cache, and runtime performance | Yes |
 | code-documentation-generator | Generate technical docs | After impl |
 
 ### TL_CORE_LIBRARY / DEV_CORE_LIBRARY
@@ -124,12 +148,48 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 
 ## Platform Layer Agent Mappings
 
-### DEV_PLATFORM_* (All Platforms)
+### DEV_PLATFORM_IOS
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| env-config-generator | Generate platform-specific configs | Yes |
-| dockerfile-generator | Generate platform build containers | Yes |
+| platform-manifest-generator | Generate Info.plist, entitlements | Yes |
+| env-config-generator | Generate build configurations | Yes |
+
+### DEV_PLATFORM_ANDROID
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| platform-manifest-generator | Generate AndroidManifest.xml, gradle configs | Yes |
+| env-config-generator | Generate build configurations | Yes |
+
+### DEV_PLATFORM_WINDOWS
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| platform-manifest-generator | Generate app manifests, MSIX config | Yes |
+| env-config-generator | Generate build configurations | Yes |
+
+### DEV_PLATFORM_MACOS
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| platform-manifest-generator | Generate Info.plist, entitlements | Yes |
+| env-config-generator | Generate build configurations | Yes |
+
+### DEV_PLATFORM_LINUX
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| platform-manifest-generator | Generate .desktop files, systemd units, package configs | Yes |
+| env-config-generator | Generate build configurations | Yes |
+
+### DEV_PLATFORM_EMBEDDED
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| platform-manifest-generator | Generate linker scripts, Kconfig | Yes |
+| env-config-generator | Generate build configurations | Yes |
+| performance-analyzer | Analyze memory and timing constraints | After impl |
 
 ## Integration Layer Agent Mappings
 
@@ -152,6 +212,7 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
 | api-designer | Design protocol schemas | Yes |
+| protocol-schema-generator | Generate binary/protobuf schemas | Yes |
 | security-scanner | Check network security | After impl |
 
 ### DEV_INTEGRATION_HARDWARE
@@ -160,12 +221,38 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 |-----------|---------|----------|
 | api-designer | Design hardware abstraction API | Yes |
 | code-documentation-generator | Document hardware interfaces | After impl |
+| protocol-schema-generator | Generate communication protocol schemas | Yes |
 
 ## Parallelization Rules
 
 1. **Yes** = Can run in parallel with other "Yes" sub-agents
 2. **First** = Must run before other sub-agents
 3. **After X** = Must wait for sub-agent X to complete
+
+## Extended Sub-Agents
+
+The following sub-agents have been extended to support multiple platforms:
+
+### component-generator
+- **Web**: React, Vue, Svelte, Angular, Solid
+- **Mobile**: React Native, Flutter, SwiftUI, Jetpack Compose
+- **Desktop**: Qt (QML/Widgets), Electron, Tauri, WPF, GTK
+
+### api-designer
+- **REST**: OpenAPI/Swagger specifications
+- **GraphQL**: SDL schema definitions
+- **gRPC**: Protocol Buffer service definitions
+- **WebSocket**: Message schemas and event catalogs
+- **CLI**: Command structure and help text
+- **Binary**: Custom protocol specifications
+
+### env-config-generator
+- **Backend**: .env files, config YAML/TOML
+- **Frontend**: Build-time env vars, runtime config
+- **Mobile**: Build variants, remote config
+- **Desktop**: XDG, Registry, plist configs
+- **CLI**: ~/.config files, precedence rules
+- **Embedded**: Kconfig, compile-time defines
 
 ## Adding New Mappings
 

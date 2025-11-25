@@ -30,7 +30,7 @@ jules-agentic-software-builder-for-claude/
 │   ├── architecture.md          # Layer-based agent architecture
 │   └── sub-agent-mappings.md    # Sub-agent delegation mappings
 ├── .claude/                     # Claude Code configuration
-│   ├── agents/                  # Sub-agent definitions (26 specialists)
+│   ├── agents/                  # Sub-agent definitions (30 specialists)
 │   └── skills/                  # Reusable skills (orchestrator)
 ├── agentic_builder/             # Main package
 │   ├── __init__.py
@@ -149,18 +149,26 @@ Defined in `agentic_builder/common/types.py`. Total: 35 agent configurations.
 
 ### Sub-Agents
 
-26 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
+30 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
 
 | Category | Sub-Agents |
 |----------|------------|
-| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer |
-| Design | api-designer, data-modeler, wireframe-generator, design-system-creator |
-| Code Generation | component-generator, controller-generator, model-generator, api-client-generator |
+| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, **performance-analyzer** |
+| Design | api-designer*, data-modeler, wireframe-generator, design-system-creator, **protocol-schema-generator** |
+| Code Generation | component-generator*, controller-generator, model-generator, api-client-generator |
 | Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
 | Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
 | Security | security-scanner, dependency-auditor |
-| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator, k8s-manifest-generator |
+| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator*, k8s-manifest-generator, **platform-manifest-generator** |
+| Localization | **localization-generator** |
 | Architecture | tech-stack-evaluator |
+
+*New sub-agents in **bold**, extended sub-agents marked with \**
+
+**Extended Sub-Agents:**
+- `component-generator*` - Now supports web (React, Vue, Svelte, Angular), mobile (React Native, Flutter, SwiftUI, Compose), and desktop (Qt, Electron, WPF, GTK)
+- `api-designer*` - Now supports REST, GraphQL, gRPC, WebSocket, CLI commands, and binary protocols
+- `env-config-generator*` - Now supports backend, frontend, mobile, desktop, CLI, and embedded configurations
 
 ### Orchestration
 
