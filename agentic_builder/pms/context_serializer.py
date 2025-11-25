@@ -6,6 +6,12 @@ from agentic_builder.common.types import Artifact, Task
 class ContextSerializer:
     @staticmethod
     def serialize(task: Task, dependency_outputs: Dict[str, List[Artifact]] = None) -> str:
+        """
+        Serialize task context to XML format.
+
+        Note: We only include file paths, not content. This saves tokens as agents
+        can read files directly from disk if they need the content.
+        """
         if dependency_outputs is None:
             dependency_outputs = {}
 
@@ -19,16 +25,13 @@ class ContextSerializer:
             for dep_id, artifacts in dependency_outputs.items():
                 xml.append(f"    <dependency id='{dep_id}'>")
                 for art in artifacts:
-                    xml.append(f"      <artifact name='{art.name}' type='{art.type}'>")
-                    # Ideally escape content to avoid XML injection, wrapping in CDATA is safest
-                    # Sanitize content for CDATA
-                    content = art.content.replace("]]>", "]]]]><![CDATA[>")
-                    xml.append(f"<![CDATA[{content}]]>")
-                    xml.append("      </artifact>")
+                    # Only include file path reference, not content (saves tokens)
+                    path = art.path or art.name
+                    xml.append(f"      <file path='{path}'/>")
                 xml.append("    </dependency>")
             xml.append("  </dependencies>")
 
-        # Add file context if any (not fully spec'd but good practice)
+        # Add file context if any
         if task.context_files:
             xml.append("  <files>")
             for f in task.context_files:

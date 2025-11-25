@@ -46,7 +46,8 @@ class Artifact(BaseModel):
     name: str
     type: str  # file, diff, plan, etc.
     path: Optional[str] = None
-    content: str
+    content: Optional[str] = None  # Content is optional - agents write files directly to disk
+    action: Optional[str] = None  # "created" or "modified"
 
 
 class AgentOutput(BaseModel):

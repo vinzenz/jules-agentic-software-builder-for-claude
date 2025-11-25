@@ -123,17 +123,18 @@ class WorkflowEngine(EventEmitter):
             # Let's read files from the task's context_files if any, or rely on file system state.
             # The context serializer expects `dep_outputs: Dict[str, List[Artifact]]`.
 
+            # Pass file paths from dependencies (not content - agents read files directly)
             dep_outputs = {}
             for dep_id in task.dependencies:
                 dt = self.pms.get_task(dep_id)
                 if dt and dt.context_files:
-                    # Reconstruct artifacts from files
+                    # Just pass file paths - agents will read files themselves if needed
                     arts = []
                     for fpath in dt.context_files:
                         try:
                             p = Path(fpath)
                             if p.exists() and p.is_file():
-                                arts.append(Artifact(name=p.name, type="file", path=str(p), content=p.read_text()))
+                                arts.append(Artifact(name=p.name, type="file", path=str(p)))
                         except Exception:
                             pass
                     dep_outputs[dep_id] = arts
@@ -149,11 +150,28 @@ class WorkflowEngine(EventEmitter):
             )
 
             # 4. Handle Response
+            # Agents write files directly to disk - we just track what was created/modified
             if response.success:
                 created_files = []
                 for artifact in response.artifacts:
-                    if artifact.type == "file":
-                        # Safety: prevent overwriting outside repo
+                    if artifact.type == "file" and artifact.path:
+                        # New format: agent already wrote file, we just validate and track
+                        fpath = Path(artifact.path).resolve()
+                        root_path = Path.cwd().resolve()
+
+                        if not fpath.is_relative_to(root_path):
+                            logger.error(f"Security: Agent reported file outside repo: {fpath}")
+                            continue
+
+                        # Verify file exists (agent should have created it)
+                        if fpath.exists():
+                            created_files.append(str(fpath))
+                            logger.info(f"Agent {artifact.action or 'created'} file: {fpath}")
+                        else:
+                            logger.warning(f"Agent reported file but it doesn't exist: {fpath}")
+
+                    elif artifact.type == "file" and artifact.content:
+                        # Legacy fallback: write content if provided (backwards compatibility)
                         fpath = Path(artifact.name).resolve()
                         root_path = Path.cwd().resolve()
 
@@ -161,7 +179,6 @@ class WorkflowEngine(EventEmitter):
                             logger.error(f"Security: Attempted path traversal write to {fpath}")
                             continue
 
-                        # ensure parent dir exists
                         if fpath.parent:
                             fpath.parent.mkdir(parents=True, exist_ok=True)
                         fpath.write_text(artifact.content)
