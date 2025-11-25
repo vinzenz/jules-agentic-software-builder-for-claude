@@ -2,8 +2,45 @@
 <objective>
 Plan the backend development tasks and API endpoints.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="controller-generator">
+    <purpose>Generate API endpoint handlers with validation</purpose>
+    <use_when>Need to plan controller/router structure and endpoint patterns</use_when>
+    <can_parallel>true</can_parallel>
+    <note>Use for planning endpoint structure, DEV_BACKEND will implement</note>
+  </sub_agent>
+  <sub_agent name="model-generator">
+    <purpose>Generate database model definitions with ORM mappings</purpose>
+    <use_when>Need to plan model structure and relationships</use_when>
+    <can_parallel>true</can_parallel>
+    <note>Use for planning model architecture, DEV_BACKEND will implement</note>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Controller planning and model planning can run in parallel at the architecture level.
+  </parallel_tasks>
+  <sequential_tasks>
+    None - both are independent planning tasks.
+  </sequential_tasks>
+  <handoff>
+    Pass controller specs and model definitions to DEV_BACKEND for implementation.
+  </handoff>
+</delegation_guidance>
+
 <instructions>
-1. Define API specifications (OpenAPI/Swagger).
-2. Plan database migrations.
-3. Assign tasks to Backend Developer.
+1. Review architecture and API specifications.
+2. Use the orchestrator skill to plan backend work breakdown.
+3. Delegate to sub-agents for planning:
+   - controller-generator: Define endpoint structure and validation patterns
+   - model-generator: Plan model hierarchy and relationships
+4. Run both in parallel as they're independent at planning stage.
+5. Define API specifications (OpenAPI/Swagger).
+6. Plan database migrations.
+7. Create task specifications for Backend Developer.
+8. Output endpoint breakdown and implementation plan.
 </instructions>

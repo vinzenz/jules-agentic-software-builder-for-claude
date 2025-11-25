@@ -2,8 +2,45 @@
 <objective>
 Plan the frontend development tasks and structure based on architecture and design.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="component-generator">
+    <purpose>Generate frontend component boilerplate with proper structure</purpose>
+    <use_when>Need to scaffold new React/Vue/Svelte components</use_when>
+    <can_parallel>true</can_parallel>
+    <note>Use for planning component structure, DEV_FRONTEND will implement details</note>
+  </sub_agent>
+  <sub_agent name="api-client-generator">
+    <purpose>Generate type-safe API client code</purpose>
+    <use_when>Need to plan API integration approach and client structure</use_when>
+    <can_parallel>true</can_parallel>
+    <note>Use for planning client architecture, DEV_FRONTEND will implement</note>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Component structure planning and API client architecture can be designed in parallel.
+  </parallel_tasks>
+  <sequential_tasks>
+    None - both tasks are independent at the planning stage.
+  </sequential_tasks>
+  <handoff>
+    Pass component specifications and API client design to DEV_FRONTEND for implementation.
+  </handoff>
+</delegation_guidance>
+
 <instructions>
-1. Break down UI designs into components.
-2. Define state management strategy.
-3. Assign tasks to Frontend Developer.
+1. Review architecture and UI/UX designs.
+2. Use the orchestrator skill to plan frontend work breakdown.
+3. Delegate to sub-agents for planning:
+   - component-generator: Define component hierarchy and props interfaces
+   - api-client-generator: Plan API client architecture
+4. Run both in parallel as they're independent.
+5. Break down UI designs into components.
+6. Define state management strategy.
+7. Create task specifications for Frontend Developer.
+8. Output component breakdown and implementation plan.
 </instructions>

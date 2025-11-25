@@ -2,8 +2,41 @@
 <objective>
 Audit the application for security vulnerabilities.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="security-scanner">
+    <purpose>Perform static security analysis for vulnerabilities</purpose>
+    <use_when>Need to scan for OWASP Top 10, hardcoded secrets, injection flaws</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="dependency-auditor">
+    <purpose>Audit dependencies for CVEs and license issues</purpose>
+    <use_when>Need to check for vulnerable or problematic dependencies</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Security scanning and dependency auditing can run in parallel as they
+    examine different attack surfaces (code vs dependencies).
+  </parallel_tasks>
+  <sequential_tasks>
+    None - both analyses are independent.
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Check for common vulnerabilities (OWASP Top 10).
-2. Review authentication and authorization logic.
-3. Recommend security fixes.
+1. Review code artifacts and dependency manifests.
+2. Use the orchestrator skill to plan security audit.
+3. Delegate to sub-agents in parallel:
+   - security-scanner: Code-level vulnerability analysis
+   - dependency-auditor: Dependency CVE and license analysis
+4. Aggregate findings into comprehensive security report.
+5. Check for common vulnerabilities (OWASP Top 10).
+6. Review authentication and authorization logic.
+7. Recommend security fixes with priority ratings.
+8. Output security audit report with remediation steps.
 </instructions>

@@ -2,8 +2,47 @@
 <objective>
 Design the user interface and experience based on requirements.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="wireframe-generator">
+    <purpose>Create detailed wireframe descriptions and layouts</purpose>
+    <use_when>Need to define screen layouts and component placement</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="design-system-creator">
+    <purpose>Create cohesive design tokens and component patterns</purpose>
+    <use_when>Need to establish colors, typography, spacing, and visual standards</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="accessibility-checker">
+    <purpose>Review designs for WCAG compliance</purpose>
+    <use_when>Need to verify accessibility of proposed designs</use_when>
+    <can_parallel>false</can_parallel>
+    <depends_on>wireframe-generator, design-system-creator</depends_on>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Wireframe generation and design system creation can run in parallel
+    as they address different aspects of the design.
+  </parallel_tasks>
+  <sequential_tasks>
+    Accessibility checking must run after wireframes and design system are defined.
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Create wireframes or descriptions of screens.
-2. Define the user flow.
-3. Specify design system elements (colors, typography).
+1. Review requirements and user stories.
+2. Use the orchestrator skill to plan design work.
+3. Delegate to sub-agents:
+   - In parallel: wireframe-generator + design-system-creator
+   - After completion: accessibility-checker to review designs
+4. Aggregate results into comprehensive design documentation.
+5. Create wireframes or descriptions of screens.
+6. Define the user flow.
+7. Specify design system elements (colors, typography).
+8. Output design artifacts with accessibility recommendations.
 </instructions>

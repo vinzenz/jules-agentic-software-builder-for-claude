@@ -6,17 +6,70 @@ from pydantic import BaseModel, Field
 
 
 class AgentType(str, Enum):
+    # Universal Agents
     PM = "PM"
     ARCHITECT = "ARCHITECT"
     UIUX = "UIUX"
-    TL_FRONTEND = "TL_FRONTEND"
-    TL_BACKEND = "TL_BACKEND"
-    DEV_FRONTEND = "DEV_FRONTEND"
-    DEV_BACKEND = "DEV_BACKEND"
     TEST = "TEST"
     CQR = "CQR"
     SR = "SR"
     DOE = "DOE"
+
+    # UI Layer Agents
+    TL_UI_WEB = "TL_UI_WEB"
+    DEV_UI_WEB = "DEV_UI_WEB"
+    TL_UI_MOBILE = "TL_UI_MOBILE"
+    DEV_UI_MOBILE = "DEV_UI_MOBILE"
+    TL_UI_DESKTOP = "TL_UI_DESKTOP"
+    DEV_UI_DESKTOP = "DEV_UI_DESKTOP"
+    TL_UI_CLI = "TL_UI_CLI"
+    DEV_UI_CLI = "DEV_UI_CLI"
+
+    # Core Layer Agents
+    TL_CORE_API = "TL_CORE_API"
+    DEV_CORE_API = "DEV_CORE_API"
+    TL_CORE_SYSTEMS = "TL_CORE_SYSTEMS"
+    DEV_CORE_SYSTEMS = "DEV_CORE_SYSTEMS"
+    TL_CORE_LIBRARY = "TL_CORE_LIBRARY"
+    DEV_CORE_LIBRARY = "DEV_CORE_LIBRARY"
+
+    # Platform Layer Agents
+    DEV_PLATFORM_IOS = "DEV_PLATFORM_IOS"
+    DEV_PLATFORM_ANDROID = "DEV_PLATFORM_ANDROID"
+    DEV_PLATFORM_WINDOWS = "DEV_PLATFORM_WINDOWS"
+    DEV_PLATFORM_LINUX = "DEV_PLATFORM_LINUX"
+    DEV_PLATFORM_MACOS = "DEV_PLATFORM_MACOS"
+    DEV_PLATFORM_EMBEDDED = "DEV_PLATFORM_EMBEDDED"
+
+    # Integration Layer Agents
+    DEV_INTEGRATION_DATABASE = "DEV_INTEGRATION_DATABASE"
+    DEV_INTEGRATION_API = "DEV_INTEGRATION_API"
+    DEV_INTEGRATION_NETWORK = "DEV_INTEGRATION_NETWORK"
+    DEV_INTEGRATION_HARDWARE = "DEV_INTEGRATION_HARDWARE"
+
+    # Content Layer Agents
+    TL_CONTENT = "TL_CONTENT"
+    DEV_CONTENT = "DEV_CONTENT"
+
+    # Legacy aliases (backward compatibility)
+    TL_FRONTEND = "TL_FRONTEND"  # Alias for TL_UI_WEB
+    DEV_FRONTEND = "DEV_FRONTEND"  # Alias for DEV_UI_WEB
+    TL_BACKEND = "TL_BACKEND"  # Alias for TL_CORE_API
+    DEV_BACKEND = "DEV_BACKEND"  # Alias for DEV_CORE_API
+
+
+# Mapping of legacy agent types to new types
+AGENT_TYPE_ALIASES = {
+    AgentType.TL_FRONTEND: AgentType.TL_UI_WEB,
+    AgentType.DEV_FRONTEND: AgentType.DEV_UI_WEB,
+    AgentType.TL_BACKEND: AgentType.TL_CORE_API,
+    AgentType.DEV_BACKEND: AgentType.DEV_CORE_API,
+}
+
+
+def resolve_agent_type(agent_type: AgentType) -> AgentType:
+    """Resolve legacy agent types to their new equivalents."""
+    return AGENT_TYPE_ALIASES.get(agent_type, agent_type)
 
 
 class AgentStatus(str, Enum):

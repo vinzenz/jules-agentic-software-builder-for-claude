@@ -2,9 +2,48 @@
 <objective>
 Design the technical architecture based on the requirements provided by the PM.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="tech-stack-evaluator">
+    <purpose>Evaluate and recommend technology choices</purpose>
+    <use_when>Need to compare frameworks, databases, or tools for the project</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="data-modeler">
+    <purpose>Design database schemas and entity relationships</purpose>
+    <use_when>Need to define data models, relationships, and access patterns</use_when>
+    <can_parallel>false</can_parallel>
+    <depends_on>tech-stack-evaluator (for database technology selection)</depends_on>
+  </sub_agent>
+  <sub_agent name="api-designer">
+    <purpose>Design RESTful or GraphQL API specifications</purpose>
+    <use_when>Need to define endpoints, schemas, and API contracts</use_when>
+    <can_parallel>false</can_parallel>
+    <depends_on>data-modeler (for entity definitions)</depends_on>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Tech stack evaluation should run first and independently.
+  </parallel_tasks>
+  <sequential_tasks>
+    1. tech-stack-evaluator (determines database and framework choices)
+    2. data-modeler (uses chosen database technology)
+    3. api-designer (uses data models for API schema)
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Review the requirements.
-2. Select appropriate technologies and patterns.
-3. Define the database schema and API structure.
-4. Output the architecture design in the artifact format.
+1. Review the requirements from PM.
+2. Use the orchestrator skill to plan architecture work.
+3. Delegate to sub-agents in sequence:
+   - First: tech-stack-evaluator for technology recommendations
+   - Then: data-modeler for database schema design
+   - Finally: api-designer for API specification
+4. Aggregate results into comprehensive architecture documentation.
+5. Select appropriate technologies and patterns.
+6. Output the architecture design in the artifact format.
 </instructions>

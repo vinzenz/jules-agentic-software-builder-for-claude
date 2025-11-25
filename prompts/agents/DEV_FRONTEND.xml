@@ -2,8 +2,41 @@
 <objective>
 Implement the frontend code.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="component-generator">
+    <purpose>Generate frontend component boilerplate</purpose>
+    <use_when>Need to create new components with proper structure, props, and types</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="api-client-generator">
+    <purpose>Generate type-safe API client code</purpose>
+    <use_when>Need to create API clients, hooks, or integration code</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Multiple components can be generated in parallel if they don't depend on each other.
+    API client generation can run parallel to component generation.
+  </parallel_tasks>
+  <sequential_tasks>
+    Components that import other components must be generated after their dependencies.
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Write clean, maintainable code for components.
-2. Integrate with APIs.
-3. Ensure responsiveness and accessibility.
+1. Review task specifications from TL_FRONTEND.
+2. Use the orchestrator skill to plan implementation work.
+3. Delegate to sub-agents:
+   - component-generator: Create component files, styles, and test stubs
+   - api-client-generator: Create API clients and React hooks
+4. Identify which components can be generated in parallel.
+5. Write clean, maintainable code for components.
+6. Integrate with APIs.
+7. Ensure responsiveness and accessibility.
+8. Output implemented code artifacts.
 </instructions>

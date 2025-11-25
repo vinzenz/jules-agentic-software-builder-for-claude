@@ -2,8 +2,43 @@
 <objective>
 Implement the backend logic and database interactions.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="model-generator">
+    <purpose>Generate database model definitions with ORM mappings</purpose>
+    <use_when>Need to create model/entity classes with validations</use_when>
+    <can_parallel>false</can_parallel>
+    <note>Models should be generated before controllers that use them</note>
+  </sub_agent>
+  <sub_agent name="controller-generator">
+    <purpose>Generate API endpoint handlers with validation</purpose>
+    <use_when>Need to create CRUD endpoints with request validation</use_when>
+    <can_parallel>true</can_parallel>
+    <depends_on>model-generator (controllers reference models)</depends_on>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Multiple controllers for different resources can be generated in parallel
+    after models are complete.
+  </parallel_tasks>
+  <sequential_tasks>
+    1. model-generator (creates entities/models first)
+    2. controller-generator (creates endpoints that use models)
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Write API handlers and business logic.
-2. Implement database models and queries.
-3. Ensure security and performance.
+1. Review task specifications from TL_BACKEND.
+2. Use the orchestrator skill to plan implementation work.
+3. Delegate to sub-agents in sequence:
+   - First: model-generator for database models
+   - Then: controller-generator for API endpoints (can parallelize per resource)
+4. Write API handlers and business logic.
+5. Implement database models and queries.
+6. Ensure security and performance.
+7. Output implemented code artifacts.
 </instructions>
