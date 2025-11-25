@@ -30,7 +30,7 @@ jules-agentic-software-builder-for-claude/
 │   ├── architecture.md          # Layer-based agent architecture
 │   └── sub-agent-mappings.md    # Sub-agent delegation mappings
 ├── .claude/                     # Claude Code configuration
-│   ├── agents/                  # Sub-agent definitions (48 specialists)
+│   ├── agents/                  # Sub-agent definitions (49 specialists)
 │   └── skills/                  # Reusable skills (orchestrator)
 ├── agentic_builder/             # Main package
 │   ├── __init__.py
@@ -60,7 +60,6 @@ jules-agentic-software-builder-for-claude/
 │       └── task_manager.py      # Task CRUD operations
 ├── prompts/                     # Agent prompts
 │   ├── agents/                  # Main agent XML prompts
-│   ├── sub_agents/              # Sub-agent XML definitions
 │   └── common_schema.xml        # Shared output format
 └── tests/                       # Test suite
     └── ...
