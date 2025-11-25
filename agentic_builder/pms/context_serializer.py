@@ -1,6 +1,10 @@
 from typing import Dict, List
 
+from agentic_builder.common.logging_config import get_logger, log_separator
 from agentic_builder.common.types import Task
+
+# Module logger
+logger = get_logger(__name__)
 
 
 class ContextSerializer:
@@ -16,8 +20,15 @@ class ContextSerializer:
         Note: We only include file paths, not content. Agents can read files
         directly from disk if they need the content.
         """
+        log_separator(logger, "SERIALIZING CONTEXT", char="-")
+        logger.debug(f"Task ID: {task.id}")
+        logger.debug(f"Agent Type: {task.agent_type.value}")
+        logger.debug(f"Description: {task.description}")
+
         if dependency_tasks is None:
             dependency_tasks = {}
+
+        logger.debug(f"Number of dependency tasks: {len(dependency_tasks)}")
 
         xml = ["<task_context>"]
         xml.append(f"  <task_id>{task.id}</task_id>")
@@ -27,21 +38,26 @@ class ContextSerializer:
         if dependency_tasks:
             xml.append("  <dependencies>")
             for dep_id, dep_task in dependency_tasks.items():
+                logger.debug(f"Adding dependency: {dep_id} (agent: {dep_task.agent_type.value})")
                 xml.append(f"    <dependency id='{dep_id}' agent='{dep_task.agent_type.value}'>")
 
                 # Include the agent's summary
                 if dep_task.output_summary:
+                    logger.debug(f"  - Summary: {dep_task.output_summary[:100]}...")
                     xml.append(f"      <summary>{_escape_xml(dep_task.output_summary)}</summary>")
 
                 # Include artifacts (file paths only)
                 if dep_task.context_files:
+                    logger.debug(f"  - Artifacts: {len(dep_task.context_files)} files")
                     xml.append("      <artifacts>")
                     for fpath in dep_task.context_files:
+                        logger.debug(f"    - {fpath}")
                         xml.append(f"        <artifact path='{fpath}'/>")
                     xml.append("      </artifacts>")
 
                 # Include next steps
                 if dep_task.output_next_steps:
+                    logger.debug(f"  - Next steps: {len(dep_task.output_next_steps)} items")
                     xml.append("      <next_steps>")
                     for step in dep_task.output_next_steps:
                         xml.append(f"        <step>{_escape_xml(step)}</step>")
@@ -49,6 +65,7 @@ class ContextSerializer:
 
                 # Include warnings
                 if dep_task.output_warnings:
+                    logger.debug(f"  - Warnings: {len(dep_task.output_warnings)} items")
                     xml.append("      <warnings>")
                     for warning in dep_task.output_warnings:
                         xml.append(f"        <warning>{_escape_xml(warning)}</warning>")
@@ -59,13 +76,17 @@ class ContextSerializer:
 
         # Add file context if any (for this task specifically)
         if task.context_files:
+            logger.debug(f"Adding task context files: {len(task.context_files)} files")
             xml.append("  <files>")
             for f in task.context_files:
+                logger.debug(f"  - {f}")
                 xml.append(f"    <file path='{f}'/>")
             xml.append("  </files>")
 
         xml.append("</task_context>")
-        return "\n".join(xml)
+        result = "\n".join(xml)
+        logger.debug(f"Serialized context length: {len(result)} characters")
+        return result
 
 
 def _escape_xml(text: str) -> str:

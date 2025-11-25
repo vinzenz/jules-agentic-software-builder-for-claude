@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from agentic_builder.common.logging_config import setup_debug_logging
 from agentic_builder.common.types import WorkflowStatus
 from agentic_builder.integration.claude_client import ClaudeClient
 from agentic_builder.integration.git_manager import GitManager
@@ -12,6 +13,32 @@ from agentic_builder.pms.task_manager import TaskManager
 
 app = typer.Typer(help="Agentic Mobile App Builder CLI")
 console = Console()
+
+
+# Callback for global options
+@app.callback()
+def main_callback(
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        "-d",
+        help="Enable debug logging to see prompts, responses, and internal operations",
+    ),
+):
+    """
+    Agentic Mobile App Builder - Build software with AI agents.
+
+    Use --debug to enable verbose debug logging that shows:
+    - Prompts sent to Claude agents
+    - Responses received from agents
+    - Internal workflow operations
+    - Context serialization details
+
+    Debug logs are written to both stderr and .sessions/debug_logs/
+    """
+    if debug:
+        setup_debug_logging(enabled=True, log_to_console=True, log_to_file=True)
+        console.print("[yellow]Debug logging enabled[/yellow]")
 
 
 def get_engine():
