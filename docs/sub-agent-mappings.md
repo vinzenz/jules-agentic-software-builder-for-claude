@@ -6,7 +6,7 @@ This document defines which sub-agents are available to each main agent for dele
 
 Main agents can delegate specialized tasks to sub-agents using the orchestrator skill. Sub-agents are defined in `.claude/agents/` and provide focused expertise for specific tasks.
 
-## Sub-Agent Inventory (38 Total)
+## Sub-Agent Inventory (48 Total)
 
 | Category | Sub-Agents |
 |----------|------------|
@@ -19,9 +19,10 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator, k8s-manifest-generator, platform-manifest-generator |
 | Localization | localization-generator |
 | Architecture | tech-stack-evaluator |
-| **Content** | **content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer** |
+| Content | content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer |
+| **Graphics** | **image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator** |
 
-*New content sub-agents in **bold***
+*New graphics sub-agents in **bold***
 
 ## Universal Agent Mappings
 
@@ -244,6 +245,31 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | assessment-generator | Generate questions, tests, quizzes | After research |
 | content-validator | Validate accuracy, safety, appropriateness | After generation |
 | learning-path-designer | Design learning sequences and progressions | After validation |
+
+## Graphics Layer Agent Mappings
+
+### TL_GRAPHICS (Graphics Tech Lead)
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| color-palette-extractor | Extract and define brand colors | Yes |
+| design-system-creator | Define visual tokens and patterns | Yes |
+| logo-generator | Generate logo concepts and variations | After colors |
+| icon-generator | Plan icon set requirements | After design system |
+
+### DEV_GRAPHICS (Graphics Developer)
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| image-generator | Generate images using AI (Google Imagen) | Yes |
+| background-remover | Remove backgrounds from images | Yes |
+| image-editor | Perform image editing operations | Yes |
+| asset-optimizer | Optimize images for web/mobile | After editing |
+| icon-generator | Generate icon sets for all platforms | Yes |
+| mockup-generator | Create device and product mockups | After image gen |
+| social-media-asset-generator | Generate social media graphics | After branding |
+| sprite-sheet-generator | Generate sprite sheets for games | Yes |
+| logo-generator | Generate logo assets and variations | Yes |
 
 ## Parallelization Rules
 
