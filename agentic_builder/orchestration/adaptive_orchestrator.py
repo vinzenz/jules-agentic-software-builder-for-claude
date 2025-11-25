@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from agentic_builder.common.logging_config import get_logger
+from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
 
 logger = get_logger(__name__)
 
@@ -122,10 +123,17 @@ class AdaptiveOrchestrator:
         "CQR": "main-cqr",
     }
 
-    def __init__(self, project_root: Path, interactive: bool = True):
+    def __init__(
+        self,
+        project_root: Path,
+        interactive: bool = True,
+        constraints: Optional[WorkflowConstraints] = None,
+    ):
         self.project_root = Path(project_root)
         self.tasks_dir = self.project_root / self.TASKS_DIR
-        self.interactive = interactive
+        self.constraints = constraints or WorkflowConstraints()
+        # Override interactive from constraints if provided
+        self.interactive = self.constraints.interactive if constraints else interactive
         self.skipped_agents: Set[str] = set()
         self.completed_agents: Set[str] = set()
         self.decision_log: List[Dict[str, Any]] = []
@@ -176,6 +184,7 @@ class AdaptiveOrchestrator:
             "session_id": session_id,
             "project_idea": project_idea,
             "created_at": datetime.utcnow().isoformat() + "Z",
+            "constraints": self.constraints.to_manifest_dict(),
             "execution": {
                 "completed": [],
                 "in_progress": [],
@@ -185,6 +194,13 @@ class AdaptiveOrchestrator:
             "user_decisions": {},
             "decision_log": [],
         }
+
+        # Log constraint info
+        scope = self.constraints.effective_scope()
+        if scope != ScopeLevel.MVP:
+            logger.info(f"Workflow scope: {scope.value}")
+        if self.constraints.full_feature:
+            logger.info("Full-feature mode enabled - will include all applicable features")
 
         self._save_manifest(manifest)
         self._ensure_gitignore()
@@ -417,6 +433,7 @@ def run_adaptive_workflow(
     project_root: Path,
     project_idea: str,
     interactive: bool = True,
+    constraints: Optional[WorkflowConstraints] = None,
 ) -> Dict:
     """
     Convenience function to run an adaptive workflow.
@@ -425,9 +442,23 @@ def run_adaptive_workflow(
         project_root: Path to the project directory
         project_idea: Description of what to build
         interactive: Whether to prompt for user input
+        constraints: Optional workflow constraints (scope, full_feature, etc.)
 
     Returns:
         dict with workflow results
     """
-    orchestrator = AdaptiveOrchestrator(project_root, interactive)
+    # Create constraints with interactive setting if not provided
+    if constraints is None:
+        constraints = WorkflowConstraints(interactive=interactive)
+    elif constraints.interactive != interactive:
+        # Override interactive in constraints if explicitly passed
+        constraints = WorkflowConstraints(
+            scope=constraints.scope,
+            full_feature=constraints.full_feature,
+            interactive=interactive,
+            explicit_includes=constraints.explicit_includes,
+            explicit_excludes=constraints.explicit_excludes,
+        )
+
+    orchestrator = AdaptiveOrchestrator(project_root, constraints=constraints)
     return orchestrator.run_workflow(project_idea)

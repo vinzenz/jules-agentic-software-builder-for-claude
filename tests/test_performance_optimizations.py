@@ -293,3 +293,155 @@ class TestSingleSessionOrchestrator:
             assert id1.startswith("sess_")
             assert id2.startswith("sess_")
             assert id1 != id2  # Should be unique
+
+
+class TestWorkflowConstraints:
+    """Tests for WorkflowConstraints dataclass."""
+
+    def test_default_constraints(self):
+        """Test default constraint values."""
+        from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
+
+        constraints = WorkflowConstraints()
+        assert constraints.scope == ScopeLevel.MVP
+        assert constraints.full_feature is False
+        assert constraints.interactive is True
+        assert constraints.explicit_includes == []
+        assert constraints.explicit_excludes == []
+
+    def test_full_feature_effective_scope(self):
+        """Test that full_feature overrides scope to comprehensive."""
+        from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
+
+        # With full_feature=True, effective scope should be COMPREHENSIVE
+        constraints = WorkflowConstraints(full_feature=True, scope=ScopeLevel.MVP)
+        assert constraints.effective_scope() == ScopeLevel.COMPREHENSIVE
+
+        # Without full_feature, effective scope should match scope
+        constraints = WorkflowConstraints(full_feature=False, scope=ScopeLevel.STANDARD)
+        assert constraints.effective_scope() == ScopeLevel.STANDARD
+
+    def test_constraints_to_manifest_dict(self):
+        """Test conversion to manifest dictionary."""
+        from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
+
+        constraints = WorkflowConstraints(
+            scope=ScopeLevel.STANDARD,
+            full_feature=True,
+            interactive=False,
+            explicit_includes=["auth"],
+            explicit_excludes=["mobile"],
+        )
+
+        manifest_dict = constraints.to_manifest_dict()
+
+        # full_feature=True should override scope to comprehensive
+        assert manifest_dict["scope"] == "comprehensive"
+        assert manifest_dict["full_feature"] is True
+        assert manifest_dict["interactive"] is False
+        assert "auth" in manifest_dict["explicit_includes"]
+        assert "mobile" in manifest_dict["explicit_excludes"]
+
+
+class TestOrchestratorTypes:
+    """Tests for orchestrator type enum."""
+
+    def test_orchestrator_type_values(self):
+        """Test OrchestratorType enum values."""
+        from agentic_builder.common.types import OrchestratorType
+
+        assert OrchestratorType.ADAPTIVE.value == "adaptive"
+        assert OrchestratorType.PARALLEL.value == "parallel"
+        assert OrchestratorType.SEQUENTIAL.value == "sequential"
+
+
+class TestAdaptiveOrchestratorConstraints:
+    """Tests for AdaptiveOrchestrator with constraints."""
+
+    def test_orchestrator_with_constraints(self):
+        """Test orchestrator accepts constraints."""
+        from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
+        from agentic_builder.orchestration.adaptive_orchestrator import AdaptiveOrchestrator
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            constraints = WorkflowConstraints(
+                scope=ScopeLevel.COMPREHENSIVE,
+                full_feature=True,
+                interactive=False,
+            )
+            orch = AdaptiveOrchestrator(Path(tmpdir), constraints=constraints)
+
+            assert orch.constraints.full_feature is True
+            assert orch.constraints.scope == ScopeLevel.COMPREHENSIVE
+            assert orch.interactive is False
+
+    def test_orchestrator_constraints_in_manifest(self):
+        """Test constraints are written to manifest."""
+        import json
+
+        from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
+        from agentic_builder.orchestration.adaptive_orchestrator import AdaptiveOrchestrator
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            constraints = WorkflowConstraints(
+                scope=ScopeLevel.COMPREHENSIVE,
+                full_feature=True,
+            )
+            orch = AdaptiveOrchestrator(Path(tmpdir), constraints=constraints)
+
+            # Initialize session to create manifest
+            orch._initialize_session("test_session", "Build a todo app")
+
+            # Read manifest and check constraints
+            manifest_path = Path(tmpdir) / ".tasks" / "manifest.json"
+            manifest = json.loads(manifest_path.read_text())
+
+            assert "constraints" in manifest
+            assert manifest["constraints"]["full_feature"] is True
+            assert manifest["constraints"]["scope"] == "comprehensive"
+
+
+class TestCLIIntegration:
+    """Tests for CLI integration with new flags."""
+
+    def test_get_orchestrator_adaptive(self):
+        """Test get_orchestrator returns AdaptiveOrchestrator."""
+        from agentic_builder.common.types import OrchestratorType, WorkflowConstraints
+        from agentic_builder.main import get_orchestrator
+        from agentic_builder.orchestration.adaptive_orchestrator import AdaptiveOrchestrator
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            constraints = WorkflowConstraints(full_feature=True)
+            orch = get_orchestrator(
+                output_dir=Path(tmpdir),
+                orchestrator_type=OrchestratorType.ADAPTIVE,
+                constraints=constraints,
+            )
+            assert isinstance(orch, AdaptiveOrchestrator)
+            assert orch.constraints.full_feature is True
+
+    def test_get_orchestrator_sequential(self):
+        """Test get_orchestrator returns WorkflowEngine for sequential."""
+        from agentic_builder.common.types import OrchestratorType
+        from agentic_builder.main import get_orchestrator
+        from agentic_builder.orchestration.workflow_engine import WorkflowEngine
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orch = get_orchestrator(
+                output_dir=Path(tmpdir),
+                orchestrator_type=OrchestratorType.SEQUENTIAL,
+            )
+            assert isinstance(orch, WorkflowEngine)
+
+    def test_get_orchestrator_parallel(self):
+        """Test get_orchestrator returns ParallelWorkflowEngine."""
+        from agentic_builder.common.types import OrchestratorType
+        from agentic_builder.main import get_orchestrator
+        from agentic_builder.orchestration.parallel_engine import ParallelWorkflowEngine
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            orch = get_orchestrator(
+                output_dir=Path(tmpdir),
+                orchestrator_type=OrchestratorType.PARALLEL,
+            )
+            assert isinstance(orch, ParallelWorkflowEngine)

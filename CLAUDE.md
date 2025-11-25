@@ -481,6 +481,23 @@ agentic-builder run FULL_APP_GENERATION --idea "Create a C++ SQLite wrapper libr
 # With debug logging
 agentic-builder --debug run FULL_APP_GENERATION --idea "Your project idea"
 
+# Full-Feature Mode (not MVP) - include all applicable features
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --full-feature
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -f
+
+# Select orchestrator engine
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --orchestrator adaptive  # Default, fastest
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -e parallel              # 5x faster parallel
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -e sequential            # Legacy mode
+
+# Non-interactive mode (auto-accept recommendations)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --no-interactive
+
+# Feature scope (alternative to --full-feature)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope mvp            # Minimal (default)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope standard       # Common features
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope comprehensive  # All features
+
 # List sessions
 agentic-builder list
 
@@ -502,6 +519,33 @@ agentic-builder resume <session-id>
 | `AMAB_MOCK_CLAUDE_CLI` | Set to `1` to mock Claude CLI responses |
 | `AMAB_MOCK_GH_CLI` | Set to `1` to mock GitHub CLI |
 | `GOOGLE_AI_API_KEY` | Google AI Studio API key for image generation (Imagen) |
+
+### CLI Run Command Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--idea` | `-i` | string | - | Project idea/description |
+| `--output-dir` | `-o` | path | CWD | Project output directory |
+| `--orchestrator` | `-e` | choice | `adaptive` | Engine: adaptive, parallel, sequential |
+| `--full-feature` | `-f` | bool | `false` | Include all features (not MVP) |
+| `--interactive/--no-interactive` | - | bool | `true` | Enable/disable user prompts |
+| `--scope` | `-s` | choice | `mvp` | Scope: mvp, standard, comprehensive |
+
+**Orchestrator Types:**
+- `adaptive` - Discovery-driven, spawns only needed agents (default, fastest)
+- `parallel` - Async parallel execution with predefined workflow (5x faster)
+- `sequential` - Original sequential execution (legacy)
+
+**Scope Levels:**
+- `mvp` - Minimal viable product (PM recommends simpler solutions)
+- `standard` - Include common features (auth, basic testing, CI)
+- `comprehensive` - All features, full testing, docs, monitoring
+
+**Full-Feature Mode:**
+The `--full-feature` flag overrides PM's tendency to recommend MVP:
+- Auto-includes: auth, testing, CI/CD, monitoring, documentation
+- Elevates confidence levels (fewer user questions)
+- Sets scope to `comprehensive`
 
 ## Key Conventions
 
