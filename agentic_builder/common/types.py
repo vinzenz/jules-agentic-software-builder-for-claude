@@ -9,7 +9,8 @@ class AgentType(str, Enum):
     # Universal Agents
     PM = "PM"
     ARCHITECT = "ARCHITECT"
-    UIUX = "UIUX"
+    UIUX_GUI = "UIUX_GUI"  # UI/UX for graphical interfaces (Web, Mobile, Desktop)
+    UIUX_CLI = "UIUX_CLI"  # UX for command-line interfaces
     TEST = "TEST"
     CQR = "CQR"
     SR = "SR"
@@ -56,6 +57,7 @@ class AgentType(str, Enum):
     DEV_GRAPHICS = "DEV_GRAPHICS"
 
     # Legacy aliases (backward compatibility)
+    UIUX = "UIUX"  # Alias for UIUX_GUI (backward compatibility)
     TL_FRONTEND = "TL_FRONTEND"  # Alias for TL_UI_WEB
     DEV_FRONTEND = "DEV_FRONTEND"  # Alias for DEV_UI_WEB
     TL_BACKEND = "TL_BACKEND"  # Alias for TL_CORE_API
@@ -64,6 +66,7 @@ class AgentType(str, Enum):
 
 # Mapping of legacy agent types to new types
 AGENT_TYPE_ALIASES = {
+    AgentType.UIUX: AgentType.UIUX_GUI,
     AgentType.TL_FRONTEND: AgentType.TL_UI_WEB,
     AgentType.DEV_FRONTEND: AgentType.DEV_UI_WEB,
     AgentType.TL_BACKEND: AgentType.TL_CORE_API,

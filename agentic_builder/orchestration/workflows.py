@@ -21,7 +21,8 @@ WORKFLOW_TEMPLATES: Dict[WorkflowType, List[AgentType]] = {
     WorkflowType.FEATURE_ADDITION: [
         AgentType.PM,
         AgentType.ARCHITECT,
-        AgentType.UIUX,
+        AgentType.UIUX_GUI,
+        AgentType.UIUX_CLI,
         AgentType.TL_FRONTEND,
         AgentType.TL_BACKEND,
         AgentType.DEV_FRONTEND,

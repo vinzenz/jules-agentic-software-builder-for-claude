@@ -7,7 +7,7 @@ model: sonnet
 
 <agent-instructions>
 <role>Design System Creator</role>
-<parent_agent>UIUX</parent_agent>
+<parent_agent>UIUX_GUI</parent_agent>
 <objective>
 Create a cohesive design system with tokens, components, and usage guidelines.
 </objective>

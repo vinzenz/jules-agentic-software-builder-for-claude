@@ -18,8 +18,10 @@ class AgentConfig(BaseModel):
 # Dependency Rules:
 # - PM has no dependencies (entry point)
 # - ARCHITECT depends on PM
-# - UIUX depends on PM
-# - TL_* agents depend on ARCHITECT (and UIUX for UI agents)
+# - UIUX_GUI depends on PM (for graphical interfaces: Web, Mobile, Desktop)
+# - UIUX_CLI depends on PM (for command-line interface usability)
+# - TL_UI_WEB/MOBILE/DESKTOP agents depend on ARCHITECT and UIUX_GUI
+# - TL_UI_CLI agents depend on ARCHITECT and UIUX_CLI
 # - DEV_* agents depend on their corresponding TL_*
 # - Platform agents depend on ARCHITECT
 # - Integration agents depend on ARCHITECT
@@ -41,8 +43,14 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.PM],
         layer="universal",
     ),
-    AgentType.UIUX: AgentConfig(
-        type=AgentType.UIUX,
+    AgentType.UIUX_GUI: AgentConfig(
+        type=AgentType.UIUX_GUI,
+        model_tier=ModelTier.OPUS,
+        dependencies=[AgentType.PM],
+        layer="universal",
+    ),
+    AgentType.UIUX_CLI: AgentConfig(
+        type=AgentType.UIUX_CLI,
         model_tier=ModelTier.OPUS,
         dependencies=[AgentType.PM],
         layer="universal",
@@ -79,7 +87,7 @@ AGENT_CONFIGS_MAP = {
     AgentType.TL_UI_WEB: AgentConfig(
         type=AgentType.TL_UI_WEB,
         model_tier=ModelTier.SONNET,
-        dependencies=[AgentType.ARCHITECT, AgentType.UIUX],
+        dependencies=[AgentType.ARCHITECT, AgentType.UIUX_GUI],
         layer="ui",
     ),
     AgentType.DEV_UI_WEB: AgentConfig(
@@ -92,7 +100,7 @@ AGENT_CONFIGS_MAP = {
     AgentType.TL_UI_MOBILE: AgentConfig(
         type=AgentType.TL_UI_MOBILE,
         model_tier=ModelTier.SONNET,
-        dependencies=[AgentType.ARCHITECT, AgentType.UIUX],
+        dependencies=[AgentType.ARCHITECT, AgentType.UIUX_GUI],
         layer="ui",
     ),
     AgentType.DEV_UI_MOBILE: AgentConfig(
@@ -105,7 +113,7 @@ AGENT_CONFIGS_MAP = {
     AgentType.TL_UI_DESKTOP: AgentConfig(
         type=AgentType.TL_UI_DESKTOP,
         model_tier=ModelTier.SONNET,
-        dependencies=[AgentType.ARCHITECT, AgentType.UIUX],
+        dependencies=[AgentType.ARCHITECT, AgentType.UIUX_GUI],
         layer="ui",
     ),
     AgentType.DEV_UI_DESKTOP: AgentConfig(
@@ -118,7 +126,7 @@ AGENT_CONFIGS_MAP = {
     AgentType.TL_UI_CLI: AgentConfig(
         type=AgentType.TL_UI_CLI,
         model_tier=ModelTier.SONNET,
-        dependencies=[AgentType.ARCHITECT],  # No UIUX for CLI
+        dependencies=[AgentType.ARCHITECT, AgentType.UIUX_CLI],
         layer="ui",
     ),
     AgentType.DEV_UI_CLI: AgentConfig(
@@ -258,10 +266,16 @@ AGENT_CONFIGS_MAP = {
     # ========================================
     # LEGACY ALIASES (backward compatibility)
     # ========================================
+    AgentType.UIUX: AgentConfig(
+        type=AgentType.UIUX,
+        model_tier=ModelTier.OPUS,
+        dependencies=[AgentType.PM],
+        layer="universal",
+    ),
     AgentType.TL_FRONTEND: AgentConfig(
         type=AgentType.TL_FRONTEND,
         model_tier=ModelTier.SONNET,
-        dependencies=[AgentType.ARCHITECT, AgentType.UIUX],
+        dependencies=[AgentType.ARCHITECT, AgentType.UIUX_GUI],
         layer="ui",
     ),
     AgentType.DEV_FRONTEND: AgentConfig(

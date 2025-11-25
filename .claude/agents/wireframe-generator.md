@@ -7,7 +7,7 @@ model: sonnet
 
 <agent-instructions>
 <role>Wireframe Generator</role>
-<parent_agent>UIUX</parent_agent>
+<parent_agent>UIUX_GUI</parent_agent>
 <objective>
 Create detailed wireframe descriptions and ASCII/text-based layouts for UI screens.
 </objective>

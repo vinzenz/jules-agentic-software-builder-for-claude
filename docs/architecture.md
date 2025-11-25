@@ -53,11 +53,14 @@ These agents apply to ALL software projects regardless of type:
 |-------|------|------------|-------------|
 | PM | Project Manager | Opus | Analyzes requirements, creates project plan, coordinates workflow |
 | ARCHITECT | System Architect | Opus | Designs technical architecture, selects technologies |
-| UIUX | UI/UX Designer | Opus | Designs user interfaces and experiences (optional for non-UI projects) |
+| UIUX_GUI | UI/UX Designer (GUI) | Opus | Designs visual interfaces (Web, Mobile, Desktop) - wireframes, design systems, visual accessibility |
+| UIUX_CLI | UX Designer (CLI) | Opus | Designs CLI user experience - command structure, help text, error messages, output formatting |
 | TEST | Test Engineer | Sonnet | Creates and executes tests across all layers |
 | CQR | Code Quality Reviewer | Sonnet | Reviews code quality, style, maintainability |
 | SR | Security Reviewer | Opus | Audits security vulnerabilities |
 | DOE | DevOps Engineer | Sonnet | Handles CI/CD, deployment, infrastructure |
+
+**Note:** UIUX_GUI is used by graphical UI team leads (TL_UI_WEB, TL_UI_MOBILE, TL_UI_DESKTOP), while UIUX_CLI is used by CLI team leads (TL_UI_CLI).
 
 ### UI Layer Agents
 
@@ -131,7 +134,7 @@ Content agents support applications that require:
 ### Web Application
 
 ```
-Agents: PM, ARCHITECT, UIUX
+Agents: PM, ARCHITECT, UIUX_GUI
         TL_UI_WEB, DEV_UI_WEB           (UI Layer)
         TL_CORE_API, DEV_CORE_API       (Core Layer)
         DEV_INTEGRATION_DATABASE        (Integration Layer)
@@ -141,7 +144,7 @@ Agents: PM, ARCHITECT, UIUX
 ### Mobile App (iOS + Android)
 
 ```
-Agents: PM, ARCHITECT, UIUX
+Agents: PM, ARCHITECT, UIUX_GUI
         TL_UI_MOBILE, DEV_UI_MOBILE     (UI Layer)
         TL_CORE_API, DEV_CORE_API       (Core Layer - backend)
         DEV_PLATFORM_IOS                (Platform Layer)
@@ -154,7 +157,7 @@ Agents: PM, ARCHITECT, UIUX
 ### CLI Tool (like ripgrep)
 
 ```
-Agents: PM, ARCHITECT
+Agents: PM, ARCHITECT, UIUX_CLI
         TL_UI_CLI, DEV_UI_CLI           (UI Layer)
         TL_CORE_SYSTEMS, DEV_CORE_SYSTEMS (Core Layer)
         DEV_PLATFORM_WINDOWS            (Platform Layer - if cross-platform)
@@ -177,7 +180,7 @@ Agents: PM, ARCHITECT
 ### Desktop Application (Qt)
 
 ```
-Agents: PM, ARCHITECT, UIUX
+Agents: PM, ARCHITECT, UIUX_GUI
         TL_UI_DESKTOP, DEV_UI_DESKTOP   (UI Layer)
         TL_CORE_SYSTEMS, DEV_CORE_SYSTEMS (Core Layer)
         DEV_PLATFORM_WINDOWS            (Platform Layer)
@@ -200,7 +203,7 @@ Agents: PM, ARCHITECT
 ### Educational Application
 
 ```
-Agents: PM, ARCHITECT, UIUX
+Agents: PM, ARCHITECT, UIUX_GUI
         TL_UI_WEB, DEV_UI_WEB               (UI Layer - or MOBILE)
         TL_CORE_API, DEV_CORE_API           (Core Layer)
         TL_CONTENT, DEV_CONTENT             (Content Layer)
@@ -211,7 +214,7 @@ Agents: PM, ARCHITECT, UIUX
 ### Knowledge Base / Documentation System
 
 ```
-Agents: PM, ARCHITECT, UIUX
+Agents: PM, ARCHITECT, UIUX_GUI
         TL_UI_WEB, DEV_UI_WEB               (UI Layer)
         TL_CORE_API, DEV_CORE_API           (Core Layer)
         TL_CONTENT, DEV_CONTENT             (Content Layer)
@@ -234,40 +237,44 @@ Agents: PM, ARCHITECT, UIUX
 ## Dependency Graph
 
 ```
-                    ┌──────┐
-                    │  PM  │
-                    └──┬───┘
-                       │
-           ┌───────────┼───────────┐
-           │           │           │
-           ▼           ▼           ▼
-      ┌────────┐  ┌────────┐  ┌────────┐
-      │ARCHITECT│  │  UIUX  │  │(other) │
-      └────┬───┘  └────┬───┘  └────────┘
-           │           │
-           ├───────────┼───────────────────────────┐
-           │           │                           │
-           ▼           ▼                           ▼
-      ┌─────────┐ ┌─────────┐                ┌─────────┐
-      │ TL_CORE │ │  TL_UI  │                │TL_OTHER │
-      │  _XXX   │ │  _XXX   │                │  _XXX   │
-      └────┬────┘ └────┬────┘                └────┬────┘
-           │           │                          │
-           ▼           ▼                          ▼
-      ┌─────────┐ ┌─────────┐                ┌─────────┐
-      │DEV_CORE │ │ DEV_UI  │                │DEV_OTHER│
-      │  _XXX   │ │  _XXX   │                │  _XXX   │
-      └────┬────┘ └────┬────┘                └────┬────┘
-           │           │                          │
-           └───────────┼──────────────────────────┘
-                       │
-           ┌───────────┼───────────┬───────────┐
-           │           │           │           │
-           ▼           ▼           ▼           ▼
-      ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
-      │  TEST  │  │  CQR   │  │   SR   │  │  DOE   │
-      └────────┘  └────────┘  └────────┘  └────────┘
+                          ┌──────┐
+                          │  PM  │
+                          └──┬───┘
+                             │
+         ┌───────────────────┼───────────────────┐
+         │                   │                   │
+         ▼                   ▼                   ▼
+    ┌────────┐         ┌─────────┐         ┌─────────┐
+    │ARCHITECT│         │UIUX_GUI │         │UIUX_CLI │
+    └────┬───┘         └────┬────┘         └────┬────┘
+         │                  │                   │
+         ├──────────────────┼───────────────────┤
+         │                  │                   │
+         ▼                  ▼                   ▼
+    ┌─────────┐       ┌───────────┐       ┌─────────┐
+    │ TL_CORE │       │TL_UI_WEB/ │       │TL_UI_CLI│
+    │  _XXX   │       │MOBILE/    │       └────┬────┘
+    └────┬────┘       │DESKTOP    │            │
+         │            └─────┬─────┘            │
+         ▼                  ▼                  ▼
+    ┌─────────┐       ┌─────────┐        ┌─────────┐
+    │DEV_CORE │       │DEV_UI_* │        │DEV_UI_  │
+    │  _XXX   │       │(GUI)    │        │CLI      │
+    └────┬────┘       └────┬────┘        └────┬────┘
+         │                 │                  │
+         └─────────────────┼──────────────────┘
+                           │
+             ┌─────────────┼─────────────┬─────────────┐
+             │             │             │             │
+             ▼             ▼             ▼             ▼
+        ┌────────┐    ┌────────┐    ┌────────┐    ┌────────┐
+        │  TEST  │    │  CQR   │    │   SR   │    │  DOE   │
+        └────────┘    └────────┘    └────────┘    └────────┘
 ```
+
+**Key dependencies:**
+- TL_UI_WEB/MOBILE/DESKTOP depend on ARCHITECT + UIUX_GUI
+- TL_UI_CLI depends on ARCHITECT + UIUX_CLI
 
 ## Sub-Agent Delegation
 
@@ -296,6 +303,7 @@ To add a new agent type:
 ## Backward Compatibility
 
 For backward compatibility with existing workflows:
+- `UIUX` → alias for `UIUX_GUI`
 - `TL_FRONTEND` → alias for `TL_UI_WEB`
 - `DEV_FRONTEND` → alias for `DEV_UI_WEB`
 - `TL_BACKEND` → alias for `TL_CORE_API`
