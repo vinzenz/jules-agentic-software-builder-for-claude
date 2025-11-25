@@ -13,16 +13,23 @@ def test_agent_configs_completeness():
 
 def test_model_selection():
     # Verify tiers as per spec
-    # opus: PM, ARCHITECT, SR
+    # opus: PM, ARCHITECT, UIUX_GUI, SR, TL_CONTENT, TL_GRAPHICS
     assert get_agent_config(AgentType.PM).model_tier == ModelTier.OPUS
     assert get_agent_config(AgentType.ARCHITECT).model_tier == ModelTier.OPUS
+    assert get_agent_config(AgentType.SR).model_tier == ModelTier.OPUS
+    assert get_agent_config(AgentType.UIUX_GUI).model_tier == ModelTier.OPUS
+    assert get_agent_config(AgentType.TL_GRAPHICS).model_tier == ModelTier.OPUS
 
-    # sonnet: UIUX, DEV_, TL_, TEST, CQR
-    assert get_agent_config(AgentType.UIUX).model_tier == ModelTier.SONNET
+    # UIUX is an alias for UIUX_GUI, so it should also be OPUS
+    assert get_agent_config(AgentType.UIUX).model_tier == ModelTier.OPUS
+
+    # sonnet: DEV_, TL_, TEST, CQR, DOE, UIUX_CLI
     assert get_agent_config(AgentType.DEV_FRONTEND).model_tier == ModelTier.SONNET
-
-    # haiku: DOE
-    assert get_agent_config(AgentType.DOE).model_tier == ModelTier.HAIKU
+    assert get_agent_config(AgentType.TL_FRONTEND).model_tier == ModelTier.SONNET
+    assert get_agent_config(AgentType.TEST).model_tier == ModelTier.SONNET
+    assert get_agent_config(AgentType.CQR).model_tier == ModelTier.SONNET
+    assert get_agent_config(AgentType.DOE).model_tier == ModelTier.SONNET
+    assert get_agent_config(AgentType.UIUX_CLI).model_tier == ModelTier.SONNET
 
 
 def test_response_parser_success():

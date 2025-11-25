@@ -264,6 +264,22 @@ AGENT_CONFIGS_MAP = {
     ),
 
     # ========================================
+    # GRAPHICS LAYER AGENTS
+    # ========================================
+    AgentType.TL_GRAPHICS: AgentConfig(
+        type=AgentType.TL_GRAPHICS,
+        model_tier=ModelTier.OPUS,
+        dependencies=[AgentType.PM],  # Brand/visual strategy comes from PM requirements
+        layer="graphics",
+    ),
+    AgentType.DEV_GRAPHICS: AgentConfig(
+        type=AgentType.DEV_GRAPHICS,
+        model_tier=ModelTier.SONNET,
+        dependencies=[AgentType.TL_GRAPHICS],
+        layer="graphics",
+    ),
+
+    # ========================================
     # LEGACY ALIASES (backward compatibility)
     # ========================================
     AgentType.UIUX: AgentConfig(
@@ -302,9 +318,19 @@ AGENT_CONFIGS = list(AGENT_CONFIGS_MAP.values())
 
 
 def get_agent_config(agent_type: AgentType) -> AgentConfig:
-    """Get configuration for an agent type, resolving aliases if needed."""
+    """Get configuration for an agent type, resolving aliases if needed.
+
+    Raises:
+        ValueError: If no configuration exists for the agent type.
+    """
     resolved_type = resolve_agent_type(agent_type)
-    return AGENT_CONFIGS_MAP.get(resolved_type, AGENT_CONFIGS_MAP.get(agent_type))
+    config = AGENT_CONFIGS_MAP.get(resolved_type) or AGENT_CONFIGS_MAP.get(agent_type)
+    if config is None:
+        raise ValueError(
+            f"No configuration found for agent type '{agent_type.value}'. "
+            f"Please add a config entry in AGENT_CONFIGS_MAP."
+        )
+    return config
 
 
 def get_agents_by_layer(layer: str) -> List[AgentConfig]:

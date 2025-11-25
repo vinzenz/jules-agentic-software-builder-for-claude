@@ -12,8 +12,8 @@ def test_workflow_mapper_full_app():
     # Verify DEV comes after TL
     assert order.index(AgentType.DEV_FRONTEND) > order.index(AgentType.TL_FRONTEND)
 
-    # Verify all agents are present
-    assert len(order) == 11
+    # Verify all agents are present (41 total agent types)
+    assert len(order) == len(list(AgentType))
 
 
 def test_workflow_mapper_code_review():
