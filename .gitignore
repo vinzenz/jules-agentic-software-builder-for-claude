@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .sessions/
 .tasks/
+.claude/
 *.egg-info/
 build/
 dist/
