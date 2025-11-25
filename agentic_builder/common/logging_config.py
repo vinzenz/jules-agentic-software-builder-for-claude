@@ -11,7 +11,6 @@ import logging
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from agentic_builder.common.utils import get_project_root

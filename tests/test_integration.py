@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, ANY
+from unittest.mock import ANY, patch
 
 import pytest
 
@@ -60,7 +60,7 @@ def test_claude_client_real_attempt():
                 assert resp.summary == "Real output"
                 # Verify command structure
                 args = mock_run.call_args[0][0]
-                # Check for flags we implemented: -m, -s, -p, -
-                assert "-s" in args
+                # Check for flags we implemented: --model, --system-prompt, -p, -
+                assert "--system-prompt" in args
                 assert "-p" in args
                 assert "System Prompt" in args

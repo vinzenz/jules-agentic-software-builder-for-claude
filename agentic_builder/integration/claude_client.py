@@ -5,12 +5,11 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
-from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
+from agentic_builder.agents.configs import get_agent_prompt
 from agentic_builder.agents.response_parser import ResponseParser
 from agentic_builder.common.logging_config import get_logger, log_separator, truncate_for_log
 from agentic_builder.common.types import AgentOutput, AgentType, ModelTier
 from agentic_builder.common.utils import get_project_root
-
 
 # Module logger
 logger = get_logger(__name__)
@@ -118,11 +117,17 @@ class ClaudeClient:
         # - : Stdin (Context)
 
         # Use stdin for user input to avoid ARG_MAX limits with large context
-        cmd = ["claude", "--model", model.value, "--system-prompt", system_prompt, "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
+        cmd = [
+            "claude", "--model", model.value, "--system-prompt", system_prompt,
+            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+        ]
 
         log_separator(logger, "CLI COMMAND", char="-")
         # Log command without full system prompt (it's logged above)
-        cmd_display = ["claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]", "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
+        cmd_display = [
+            "claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]",
+            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+        ]
         logger.debug(f"Command: {' '.join(cmd_display)}")
 
         # Run Claude CLI in the project root directory so agents write files
