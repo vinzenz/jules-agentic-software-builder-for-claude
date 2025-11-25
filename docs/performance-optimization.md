@@ -543,3 +543,76 @@ By implementing these optimizations:
 4. **Batched Git** eliminates 85% of git overhead
 
 **Expected Result**: Full app generation in **~15 minutes** instead of **80+ minutes**.
+
+---
+
+## Ultimate Optimization: Single Session Orchestrator
+
+The most radical optimization: **one persistent Claude CLI session** acts as the orchestrator, using the Task tool to spawn agents in parallel.
+
+### Architecture
+
+```
++-------------------------------------------------------------+
+|                    SINGLE ORCHESTRATOR                       |
+|                 (Persistent Claude CLI Session)              |
+|                                                              |
+|  - Maintains workflow state in memory                        |
+|  - Uses Task tool to spawn agents in parallel                |
+|  - Receives only task IDs back (minimal tokens)              |
+|  - All real context lives on disk in .tasks/                 |
++-------------------------------------------------------------+
+                           |
+           +---------------+---------------+
+           |               |               |
+           v               v               v
+      +---------+    +---------+    +---------+
+      | Task:PM |    |Task:ARCH|    |Task:TL  |
+      +---------+    +---------+    +---------+
+           |               |               |
+           +---------------+---------------+
+                           |
+                           v
+                   +---------------+
+                   |   .tasks/     |
+                   | (all context) |
+                   +---------------+
+```
+
+### Key Innovation
+
+**Agents return only task IDs, not full outputs:**
+
+```
+done:PM:success
+done:ARCHITECT:success
+done:DEV_UI_WEB:failed
+```
+
+All detailed output (summary, artifacts, warnings) is written to `.tasks/{AGENT}/output.json`
+
+### Token Comparison
+
+| Architecture | Orchestration Tokens | CLI Startups |
+|--------------|---------------------|--------------|
+| Multi-Process | 62,000 | 40 |
+| Parallel Engine | 3,300 | 40 |
+| **Single Session** | **~3,300** | **1** |
+
+### Implementation
+
+See `docs/orchestrator-architecture.md` for detailed design.
+
+Key files:
+- `.claude/skills/workflow-orchestrator/SKILL.md` - Orchestrator skill
+- `.claude/agents/main-*.md` - Main agent sub-agent definitions
+- `agentic_builder/orchestration/single_session.py` - Thin Python wrapper
+
+### Expected Performance
+
+| Metric | Multi-Process | Single Session | Improvement |
+|--------|---------------|----------------|-------------|
+| CLI startups | 40 | 1 | **40x** |
+| Startup overhead | 80-120s | 2-3s | **40x** |
+| Orchestration tokens | 62,000 | 3,300 | **19x** |
+| Total workflow time | 80+ min | **~10 min** | **8x** |
