@@ -118,15 +118,33 @@ class ClaudeClient:
 
         # Use stdin for user input to avoid ARG_MAX limits with large context
         cmd = [
-            "claude", "--model", model.value, "--system-prompt", system_prompt,
-            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+            "claude",
+            "--model",
+            model.value,
+            "--system-prompt",
+            system_prompt,
+            "--dangerously-skip-permissions",
+            "--tools",
+            "default",
+            "-p",
+            prompt,
+            "-",
         ]
 
         log_separator(logger, "CLI COMMAND", char="-")
         # Log command without full system prompt (it's logged above)
         cmd_display = [
-            "claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]",
-            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+            "claude",
+            "--model",
+            model.value,
+            "--system-prompt",
+            "[SYSTEM_PROMPT]",
+            "--dangerously-skip-permissions",
+            "--tools",
+            "default",
+            "-p",
+            prompt,
+            "-",
         ]
         logger.debug(f"Command: {' '.join(cmd_display)}")
 
@@ -170,7 +188,9 @@ class ClaudeClient:
             logger.debug(f"Summary: {parsed_output.summary}")
             logger.debug(f"Artifacts: {len(parsed_output.artifacts)}")
             for i, artifact in enumerate(parsed_output.artifacts):
-                logger.debug(f"  Artifact {i+1}: path={artifact.path}, action={artifact.action}, type={artifact.type}")
+                logger.debug(
+                    f"  Artifact {i + 1}: path={artifact.path}, action={artifact.action}, type={artifact.type}"
+                )
             logger.debug(f"Next Steps: {parsed_output.next_steps}")
             logger.debug(f"Warnings: {parsed_output.warnings}")
             logger.debug(f"Metadata: {parsed_output.metadata}")

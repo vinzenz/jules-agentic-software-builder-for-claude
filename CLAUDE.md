@@ -18,6 +18,8 @@ For detailed architecture information, see:
 - **[Agent Architecture](docs/architecture.md)** - Layer-based agent model, project type examples
 - **[Sub-Agent Mappings](docs/sub-agent-mappings.md)** - Which sub-agents each main agent can delegate to
 - **[Performance Optimization](docs/performance-optimization.md)** - Speed optimization strategies (5x faster)
+- **[Orchestrator Architecture](docs/orchestrator-architecture.md)** - Single-session orchestrator design (8x faster)
+- **[Discovery-Driven Architecture](docs/discovery-driven-architecture.md)** - Adaptive agent spawning (85% fewer agents)
 
 ## Codebase Structure
 
@@ -30,10 +32,17 @@ jules-agentic-software-builder-for-claude/
 ├── docs/                        # Architecture documentation
 │   ├── architecture.md          # Layer-based agent architecture
 │   ├── sub-agent-mappings.md    # Sub-agent delegation mappings
-│   └── performance-optimization.md  # Speed optimization guide
+│   ├── performance-optimization.md  # Speed optimization guide
+│   ├── orchestrator-architecture.md # Single-session orchestrator design
+│   └── discovery-driven-architecture.md  # Adaptive spawning design
 ├── .claude/                     # Claude Code configuration
-│   ├── agents/                  # Sub-agent definitions (49 specialists)
-│   └── skills/                  # Reusable skills (orchestrator)
+│   ├── agents/                  # Sub-agent definitions (49 specialists + 14 new)
+│   │   ├── main-*.md            # Main agent Task wrappers (8)
+│   │   └── architect-*.md       # Specialized architects (6)
+│   └── skills/                  # Reusable skills
+│       ├── orchestrator/        # Base orchestrator pattern
+│       ├── workflow-orchestrator/   # Single-session workflow skill
+│       └── adaptive-orchestrator/   # Discovery-driven skill
 ├── agentic_builder/             # Main package
 │   ├── __init__.py
 │   ├── main.py                  # CLI entry point (Typer app)
@@ -58,6 +67,8 @@ jules-agentic-software-builder-for-claude/
 │   │   ├── session_manager.py   # Session persistence
 │   │   ├── workflow_engine.py   # Sequential execution engine
 │   │   ├── parallel_engine.py   # Async parallel execution (5x faster)
+│   │   ├── single_session.py    # Single CLI orchestrator (8x faster)
+│   │   ├── adaptive_orchestrator.py  # Discovery-driven orchestrator
 │   │   └── workflows.py         # Workflow templates and mapper
 │   └── pms/                     # Project Management System
 │       ├── __init__.py
@@ -212,6 +223,34 @@ Sub-agents use tiered models based on task complexity:
 - `sprite-sheet-generator` - Generate sprite sheets for games with JSON metadata
 - `logo-generator` - Generate logo concepts and brand asset packages
 
+**Specialized Architects (Discovery-Driven):**
+
+Used by the adaptive orchestrator to determine exactly what's needed:
+
+| Architect | Description | Spawns |
+|-----------|-------------|--------|
+| `architect-system` | Overall system design, tech stack selection | Spawns specialized architects |
+| `architect-frontend` | UI architecture (web/mobile/desktop) | DEV_UI_* agents |
+| `architect-backend` | API/service design, database schema | DEV_CORE_API, DEV_INTEGRATION_* |
+| `architect-mobile` | Mobile-specific architecture | DEV_UI_MOBILE, platform agents |
+| `architect-data` | Complex data modeling, storage strategy | DEV_INTEGRATION_DATABASE |
+| `architect-infrastructure` | Deployment, CI/CD, DevOps | DOE, infrastructure setup |
+
+**Main Agent Task Wrappers:**
+
+Sub-agents that wrap main agents for Task tool spawning:
+
+| Wrapper | Main Agent | Model |
+|---------|------------|-------|
+| `main-pm` | PM (Project Manager) | Opus |
+| `main-architect` | ARCHITECT | Sonnet |
+| `main-uiux-gui` | UIUX_GUI | Sonnet |
+| `main-tl-ui-web` | TL_UI_WEB | Sonnet |
+| `main-tl-core-api` | TL_CORE_API | Sonnet |
+| `main-dev-ui-web` | DEV_UI_WEB | Haiku |
+| `main-dev-core-api` | DEV_CORE_API | Haiku |
+| `main-test` | TEST | Sonnet |
+
 ### Orchestration
 
 Main agents use the **orchestrator skill** (`.claude/skills/orchestrator.md`) to:
@@ -234,14 +273,33 @@ Defined in `agentic_builder/orchestration/workflows.py`:
 
 ### Key Classes
 
-- **WorkflowEngine** (`orchestration/workflow_engine.py`): Sequential orchestrator (original)
-- **ParallelWorkflowEngine** (`orchestration/parallel_engine.py`): Async parallel orchestrator (5x faster)
+**Orchestration Engines:**
+
+| Class | Module | Description | Speed |
+|-------|--------|-------------|-------|
+| `WorkflowEngine` | `workflow_engine.py` | Sequential orchestrator (original) | 1x (baseline) |
+| `ParallelWorkflowEngine` | `parallel_engine.py` | Async parallel execution | 5x faster |
+| `SingleSessionOrchestrator` | `single_session.py` | Single Claude CLI instance | 8x faster |
+| `AdaptiveOrchestrator` | `adaptive_orchestrator.py` | Discovery-driven spawning | 8x + 85% fewer agents |
+
+**Supporting Classes:**
+
 - **SessionManager** (`orchestration/session_manager.py`): Handles session persistence and status tracking
 - **TaskManager** (`pms/task_manager.py`): CRUD operations for tasks with JSON file storage
 - **TaskFileStore** (`pms/task_file_store.py`): File-based context store for zero-token context sharing
 - **MinimalContextSerializer** (`pms/minimal_context.py`): Generates ~50 token context pointers
 - **BatchedGitManager** (`integration/batched_git.py`): Phase-based git commits (85% less overhead)
+- **PhaseCommitStrategy** (`integration/batched_git.py`): Maps agents to git commit phases
 - **ClaudeClient** (`integration/claude_client.py`): Wrapper for Claude CLI invocation
+
+**Adaptive Orchestrator Data Classes:**
+
+- **ConfidenceLevel**: Enum for decision confidence (HIGH, MEDIUM, LOW)
+- **SpawnRequest**: Request to spawn an agent with context
+- **SkipDecision**: Decision to skip an agent with reason
+- **UserQuestion**: Question requiring user input
+- **AgentDecision**: Decision made by an agent
+- **AgentOutput**: Parsed output from an agent execution
 
 ### Performance Optimization (New)
 
@@ -286,6 +344,70 @@ Agents read context files directly from disk instead of receiving full context i
 | Opus | 2 | PM, SR |
 | Sonnet | 10 | ARCHITECT, UIUX_*, TL_*, TEST |
 | Haiku | 26 | All DEV_*, CQR, DOE, Content, Graphics |
+
+### Discovery-Driven Orchestration (AdaptiveOrchestrator)
+
+The adaptive orchestrator uses a **discovery-driven** approach where agents are spawned only when needed:
+
+```
+Traditional: PM → ARCHITECT → ALL 40 AGENTS (sequential)
+Discovery:   PM → architect-system → [only needed agents] (parallel)
+```
+
+**Agent Reduction by Project Type:**
+
+| Project Type | Traditional | Discovery | Reduction |
+|--------------|-------------|-----------|-----------|
+| Simple web app | 40 agents | 6 agents | 85% |
+| Mobile app | 40 agents | 10 agents | 75% |
+| CLI tool | 40 agents | 4 agents | 90% |
+
+**Confidence Levels:**
+
+Agents make decisions with confidence levels that determine user interaction:
+
+| Level | Behavior | Example |
+|-------|----------|---------|
+| HIGH | Proceed silently, log decision | "Using React 18 (industry standard)" |
+| MEDIUM | State decision, allow 2s override | "Using SQLite - say 'postgres' to change" |
+| LOW | Must ask user before proceeding | "Include authentication? [y/n]" |
+
+**Skip Propagation:**
+
+When an agent decides to skip downstream agents, the decision propagates:
+
+```python
+# PM outputs skip_agents
+skip_agents: [
+  {"agent": "architect-mobile", "reason": "Web-only project"},
+  {"agent": "DEV_UI_MOBILE", "reason": "No mobile UI needed"}
+]
+
+# These agents are added to global skip list and never spawned
+```
+
+**Agent Output Schema (Discovery-Driven):**
+
+```json
+{
+  "summary": "Completed analysis",
+  "spawn_next": [
+    {"agent": "architect-frontend", "reason": "Web UI needed", "priority": "required"}
+  ],
+  "skip_agents": [
+    {"agent": "architect-mobile", "reason": "Web-only project"}
+  ],
+  "ask_user": [
+    {
+      "id": "include_auth",
+      "question": "Include user authentication?",
+      "confidence": "low",
+      "recommendation": "no",
+      "reason": "Simpler MVP"
+    }
+  ]
+}
+```
 
 ### Artifact Handling (Token-Efficient Design)
 
@@ -359,6 +481,23 @@ agentic-builder run FULL_APP_GENERATION --idea "Create a C++ SQLite wrapper libr
 # With debug logging
 agentic-builder --debug run FULL_APP_GENERATION --idea "Your project idea"
 
+# Full-Feature Mode (not MVP) - include all applicable features
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --full-feature
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -f
+
+# Select orchestrator engine
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --orchestrator adaptive  # Default, fastest
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -e parallel              # 5x faster parallel
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -e sequential            # Legacy mode
+
+# Non-interactive mode (auto-accept recommendations)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --no-interactive
+
+# Feature scope (alternative to --full-feature)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope mvp            # Minimal (default)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope standard       # Common features
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope comprehensive  # All features
+
 # List sessions
 agentic-builder list
 
@@ -380,6 +519,33 @@ agentic-builder resume <session-id>
 | `AMAB_MOCK_CLAUDE_CLI` | Set to `1` to mock Claude CLI responses |
 | `AMAB_MOCK_GH_CLI` | Set to `1` to mock GitHub CLI |
 | `GOOGLE_AI_API_KEY` | Google AI Studio API key for image generation (Imagen) |
+
+### CLI Run Command Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--idea` | `-i` | string | - | Project idea/description |
+| `--output-dir` | `-o` | path | CWD | Project output directory |
+| `--orchestrator` | `-e` | choice | `adaptive` | Engine: adaptive, parallel, sequential |
+| `--full-feature` | `-f` | bool | `false` | Include all features (not MVP) |
+| `--interactive/--no-interactive` | - | bool | `true` | Enable/disable user prompts |
+| `--scope` | `-s` | choice | `mvp` | Scope: mvp, standard, comprehensive |
+
+**Orchestrator Types:**
+- `adaptive` - Discovery-driven, spawns only needed agents (default, fastest)
+- `parallel` - Async parallel execution with predefined workflow (5x faster)
+- `sequential` - Original sequential execution (legacy)
+
+**Scope Levels:**
+- `mvp` - Minimal viable product (PM recommends simpler solutions)
+- `standard` - Include common features (auth, basic testing, CI)
+- `comprehensive` - All features, full testing, docs, monitoring
+
+**Full-Feature Mode:**
+The `--full-feature` flag overrides PM's tendency to recommend MVP:
+- Auto-includes: auth, testing, CI/CD, monitoring, documentation
+- Elevates confidence levels (fewer user questions)
+- Sets scope to `comprehensive`
 
 ## Key Conventions
 
@@ -420,4 +586,4 @@ agentic-builder resume <session-id>
 
 ---
 
-*Last updated: 2024 - Keep this document in sync with codebase changes.*
+*Last updated: 2025-01 - Keep this document in sync with codebase changes.*

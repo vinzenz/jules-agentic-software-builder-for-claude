@@ -102,6 +102,53 @@ class ModelTier(str, Enum):
     HAIKU = "haiku"
 
 
+class ScopeLevel(str, Enum):
+    """Project scope level for feature inclusion."""
+
+    MVP = "mvp"  # Minimal viable product (default PM behavior)
+    STANDARD = "standard"  # Include common features (auth, basic testing)
+    COMPREHENSIVE = "comprehensive"  # All features, full testing, docs, etc.
+
+
+class OrchestratorType(str, Enum):
+    """Available orchestrator engines."""
+
+    ADAPTIVE = "adaptive"  # Discovery-driven, spawns only needed agents
+    PARALLEL = "parallel"  # Async parallel execution
+    SEQUENTIAL = "sequential"  # Original sequential execution
+
+
+class WorkflowConstraints(BaseModel):
+    """
+    Constraints passed to orchestrator to control workflow behavior.
+
+    Used to override default PM behavior (e.g., MVP tendency) and
+    configure orchestration options.
+    """
+
+    scope: ScopeLevel = ScopeLevel.MVP
+    full_feature: bool = False  # Shorthand for scope=comprehensive
+    interactive: bool = True  # Enable/disable user prompts
+    explicit_includes: List[str] = Field(default_factory=list)  # Features to include
+    explicit_excludes: List[str] = Field(default_factory=list)  # Features to skip
+
+    def effective_scope(self) -> ScopeLevel:
+        """Return effective scope, considering full_feature flag."""
+        if self.full_feature:
+            return ScopeLevel.COMPREHENSIVE
+        return self.scope
+
+    def to_manifest_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for manifest storage."""
+        return {
+            "scope": self.effective_scope().value,
+            "full_feature": self.full_feature,
+            "interactive": self.interactive,
+            "explicit_includes": self.explicit_includes,
+            "explicit_excludes": self.explicit_excludes,
+        }
+
+
 class Artifact(BaseModel):
     name: str
     type: str  # file, diff, plan, etc.

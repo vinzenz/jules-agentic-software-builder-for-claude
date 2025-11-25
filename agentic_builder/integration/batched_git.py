@@ -139,10 +139,7 @@ class BatchedGitManager:
             # Git commit
             self._run_git(["commit", "-m", message])
 
-            logger.info(
-                f"Committed phase '{self.current_phase.name}': "
-                f"{len(files)} files"
-            )
+            logger.info(f"Committed phase '{self.current_phase.name}': {len(files)} files")
             self._pending_phases.append(self.current_phase)
             self.current_phase = None
             return True
@@ -217,14 +214,30 @@ class PhaseCommitStrategy:
         "PLANNING": ["PM"],
         "ARCHITECTURE": ["ARCHITECT", "UIUX_GUI", "UIUX_CLI"],
         "IMPLEMENTATION": [
-            "TL_UI_WEB", "TL_UI_MOBILE", "TL_UI_DESKTOP", "TL_UI_CLI",
-            "TL_CORE_API", "TL_CORE_SYSTEMS", "TL_CORE_LIBRARY",
-            "DEV_UI_WEB", "DEV_UI_MOBILE", "DEV_UI_DESKTOP", "DEV_UI_CLI",
-            "DEV_CORE_API", "DEV_CORE_SYSTEMS", "DEV_CORE_LIBRARY",
-            "DEV_PLATFORM_IOS", "DEV_PLATFORM_ANDROID", "DEV_PLATFORM_WINDOWS",
-            "DEV_PLATFORM_LINUX", "DEV_PLATFORM_MACOS", "DEV_PLATFORM_EMBEDDED",
-            "DEV_INTEGRATION_DATABASE", "DEV_INTEGRATION_API",
-            "DEV_INTEGRATION_NETWORK", "DEV_INTEGRATION_HARDWARE",
+            "TL_UI_WEB",
+            "TL_UI_MOBILE",
+            "TL_UI_DESKTOP",
+            "TL_UI_CLI",
+            "TL_CORE_API",
+            "TL_CORE_SYSTEMS",
+            "TL_CORE_LIBRARY",
+            "DEV_UI_WEB",
+            "DEV_UI_MOBILE",
+            "DEV_UI_DESKTOP",
+            "DEV_UI_CLI",
+            "DEV_CORE_API",
+            "DEV_CORE_SYSTEMS",
+            "DEV_CORE_LIBRARY",
+            "DEV_PLATFORM_IOS",
+            "DEV_PLATFORM_ANDROID",
+            "DEV_PLATFORM_WINDOWS",
+            "DEV_PLATFORM_LINUX",
+            "DEV_PLATFORM_MACOS",
+            "DEV_PLATFORM_EMBEDDED",
+            "DEV_INTEGRATION_DATABASE",
+            "DEV_INTEGRATION_API",
+            "DEV_INTEGRATION_NETWORK",
+            "DEV_INTEGRATION_HARDWARE",
         ],
         "CONTENT": ["TL_CONTENT", "DEV_CONTENT", "TL_GRAPHICS", "DEV_GRAPHICS"],
         "QUALITY": ["TEST", "CQR", "SR"],

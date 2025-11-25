@@ -103,9 +103,7 @@ class ParallelWorkflowEngine(EventEmitter):
         """Start workflow (sync wrapper for async execution)."""
         return asyncio.run(self._start_workflow_async(workflow_name, idea))
 
-    async def _start_workflow_async(
-        self, workflow_name: str, idea: Optional[str] = None
-    ) -> str:
+    async def _start_workflow_async(self, workflow_name: str, idea: Optional[str] = None) -> str:
         """Start and run workflow asynchronously."""
         log_separator(logger, f"STARTING PARALLEL WORKFLOW: {workflow_name}")
 
@@ -152,9 +150,7 @@ class ParallelWorkflowEngine(EventEmitter):
 
         return session.id
 
-    async def _run_parallel(
-        self, session_id: str, task_store: TaskFileStore
-    ) -> WorkflowMetrics:
+    async def _run_parallel(self, session_id: str, task_store: TaskFileStore) -> WorkflowMetrics:
         """Run agents in parallel phases."""
         session = self.session_manager.load_session(session_id)
         execution_order = WorkflowMapper.get_execution_order(session.workflow_name)
@@ -191,14 +187,10 @@ class ParallelWorkflowEngine(EventEmitter):
                 continue
 
             log_separator(logger, f"PHASE {phase.phase_number}: {len(pending_agents)} agents")
-            phase_result = await self._execute_phase(
-                session_id, task_store, phase, pending_agents, metrics
-            )
+            phase_result = await self._execute_phase(session_id, task_store, phase, pending_agents, metrics)
 
             if not phase_result.success:
-                raise Exception(
-                    f"Phase {phase.phase_number} failed: {phase_result.failed_agents}"
-                )
+                raise Exception(f"Phase {phase.phase_number} failed: {phase_result.failed_agents}")
 
             # Add to sequential time estimate
             for agent in pending_agents:
@@ -224,10 +216,7 @@ class ParallelWorkflowEngine(EventEmitter):
         phase.started_at = datetime.now()
 
         # Create tasks for all agents
-        tasks = [
-            self._execute_agent(session_id, task_store, agent, metrics)
-            for agent in agents
-        ]
+        tasks = [self._execute_agent(session_id, task_store, agent, metrics) for agent in agents]
 
         # Run concurrently
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -278,9 +267,7 @@ class ParallelWorkflowEngine(EventEmitter):
                 )
 
                 # Call Claude asynchronously
-                response = await self._call_claude_async(
-                    agent_type, config, context
-                )
+                response = await self._call_claude_async(agent_type, config, context)
 
                 if not response.success:
                     raise Exception(response.summary)
@@ -322,10 +309,13 @@ class ParallelWorkflowEngine(EventEmitter):
         # Build command
         cmd = [
             "claude",
-            "--model", config.model_tier.value,
+            "--model",
+            config.model_tier.value,
             "--dangerously-skip-permissions",
-            "--tools", "default",
-            "-p", prompt,
+            "--tools",
+            "default",
+            "-p",
+            prompt,
             "-",
         ]
 
@@ -349,6 +339,7 @@ class ParallelWorkflowEngine(EventEmitter):
 
         # Parse response (reuse existing parser)
         from agentic_builder.agents.response_parser import ResponseParser
+
         return ResponseParser.parse(stdout.decode())
 
     def _process_artifacts(self, response, agent_type: AgentType) -> List[str]:

@@ -15,8 +15,72 @@ Your job is to **discover what's actually needed** so we don't waste time runnin
 
 ## Context Loading
 
-1. Read `.tasks/manifest.json` for the project idea
-2. This is the first agent - no dependencies to read
+1. Read `.tasks/manifest.json` for the project idea and constraints
+2. Check `constraints.full_feature` and `constraints.scope` values
+3. This is the first agent - no dependencies to read
+
+## Constraint Handling
+
+**Check `.tasks/manifest.json` for constraints:**
+
+```json
+{
+  "constraints": {
+    "scope": "comprehensive",  // "mvp" | "standard" | "comprehensive"
+    "full_feature": true,      // User explicitly requested all features
+    "interactive": true
+  }
+}
+```
+
+### When `full_feature: true` OR `scope: comprehensive`:
+
+**IMPORTANT**: The user has explicitly requested a fully-featured implementation, NOT MVP.
+
+1. **Include all applicable features by default** - don't recommend skipping features
+2. **Elevate confidence levels** - change LOW → HIGH for feature inclusion questions
+3. **Auto-include common features**:
+   - Authentication (if the project has user data)
+   - Comprehensive testing
+   - CI/CD pipeline
+   - Monitoring/logging
+   - Documentation
+   - Error handling
+4. **Only ask truly ambiguous questions** - framework choice, database type, deployment platform
+5. **Don't output `ask_user` for inclusion questions** - assume "yes" for optional features
+6. **Set `detected_needs` to include everything applicable** to the project type
+7. **Output empty `ask_user` array** - or only questions about architecture choices, not "should we include X?"
+
+**Example output for full_feature mode:**
+
+```json
+{
+  "detected_needs": {
+    "frontend": true,
+    "backend": true,
+    "database": true,
+    "auth": true,        // Auto-included
+    "realtime": true,    // Auto-included if applicable
+    "testing": true,     // Auto-included
+    "ci_cd": true,       // Auto-included
+    "monitoring": true   // Auto-included
+  },
+  "ask_user": []  // Empty - include everything
+}
+```
+
+### When `scope: standard`:
+
+1. Include common features (auth, basic testing, basic CI)
+2. Still ask about less common features (realtime, monitoring)
+3. Moderate confidence for inclusion questions
+
+### When `scope: mvp` (default):
+
+1. Recommend minimal viable product
+2. Ask about optional features with LOW confidence
+3. Recommend simpler solutions
+4. This is the default behavior described in the rest of this document
 
 ## Your Responsibilities
 

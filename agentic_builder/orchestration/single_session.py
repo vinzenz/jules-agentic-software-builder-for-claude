@@ -20,7 +20,7 @@ import json
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from agentic_builder.agents.fast_configs import FAST_AGENT_CONFIGS_MAP
 from agentic_builder.common.logging_config import get_logger
@@ -147,9 +147,7 @@ class SingleSessionOrchestrator:
             for agent in remaining:
                 config = FAST_AGENT_CONFIGS_MAP.get(agent)
                 if config:
-                    deps_satisfied = all(
-                        d in completed for d in config.dependencies
-                    )
+                    deps_satisfied = all(d in completed for d in config.dependencies)
                     if deps_satisfied:
                         ready.append(agent)
 
@@ -158,11 +156,13 @@ class SingleSessionOrchestrator:
                 logger.error(f"Cannot resolve: {remaining}")
                 break
 
-            phases.append({
-                "phase": phase_num,
-                "agents": [a.value for a in ready],
-                "status": "pending",
-            })
+            phases.append(
+                {
+                    "phase": phase_num,
+                    "agents": [a.value for a in ready],
+                    "status": "pending",
+                }
+            )
             completed.update(ready)
             remaining -= set(ready)
 
@@ -175,10 +175,10 @@ class SingleSessionOrchestrator:
         # Build the orchestrator prompt
         prompt = f"""Execute workflow orchestration.
 
-Workflow: {manifest['workflow']}
-Session: {manifest['session_id']}
-Agents: {len(manifest['agents'])}
-Phases: {len(manifest['phases'])}
+Workflow: {manifest["workflow"]}
+Session: {manifest["session_id"]}
+Agents: {len(manifest["agents"])}
+Phases: {len(manifest["phases"])}
 
 Read .tasks/manifest.json and begin orchestrating the workflow.
 Spawn agents in parallel phases using the Task tool.
@@ -192,9 +192,11 @@ Return a summary when done."""
             result = subprocess.run(
                 [
                     "claude",
-                    "--skill", self.ORCHESTRATOR_SKILL,
+                    "--skill",
+                    self.ORCHESTRATOR_SKILL,
                     "--dangerously-skip-permissions",
-                    "-p", prompt,
+                    "-p",
+                    prompt,
                 ],
                 cwd=self.project_root,
                 capture_output=True,
@@ -273,6 +275,7 @@ Return a summary when done."""
     def _generate_session_id(self) -> str:
         """Generate a unique session ID."""
         import uuid
+
         return f"sess_{uuid.uuid4().hex[:12]}"
 
 

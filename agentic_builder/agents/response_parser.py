@@ -33,23 +33,22 @@ class ResponseParser:
 
         # New path-based format (self-closing or with empty content)
         logger.debug("Extracting artifacts (path-based format)...")
-        path_pattern = re.compile(
-            r'<artifact\s+path=["\'](.*?)["\']\s*(?:action=["\'](\w+)["\'])?\s*/?>',
-            re.DOTALL
-        )
+        path_pattern = re.compile(r'<artifact\s+path=["\'](.*?)["\']\s*(?:action=["\'](\w+)["\'])?\s*/?>', re.DOTALL)
         for match in path_pattern.finditer(text):
             file_path = match.group(1)
             action = match.group(2) if match.group(2) else "created"
             # Extract filename from path
             name = Path(file_path).name
             logger.debug(f"  Found artifact: path={file_path}, action={action}")
-            artifacts.append(Artifact(
-                name=name,
-                type="file",
-                path=file_path,
-                content=None,  # Content is on disk, not in XML
-                action=action
-            ))
+            artifacts.append(
+                Artifact(
+                    name=name,
+                    type="file",
+                    path=file_path,
+                    content=None,  # Content is on disk, not in XML
+                    action=action,
+                )
+            )
 
         # Legacy format fallback: <artifact name="..." type="...">content</artifact>
         # Only use if no path-based artifacts found

@@ -58,7 +58,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[],
         layer="universal",
     ),
-
     # ========================================
     # SONNET TIER - Design & Architecture
     # ========================================
@@ -110,11 +109,9 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.ARCHITECT],
         layer="core",
     ),
-
     # ========================================
     # HAIKU TIER - Fast Implementation
     # ========================================
-
     # Quality & Ops (downgraded)
     AgentType.CQR: AgentConfig(
         type=AgentType.CQR,
@@ -128,7 +125,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[],
         layer="universal",
     ),
-
     # UI Layer DEV agents (all Haiku)
     AgentType.DEV_UI_WEB: AgentConfig(
         type=AgentType.DEV_UI_WEB,
@@ -166,7 +162,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_UI_CLI],
         layer="ui",
     ),
-
     # Core Layer DEV agents (all Haiku)
     AgentType.DEV_CORE_API: AgentConfig(
         type=AgentType.DEV_CORE_API,
@@ -192,7 +187,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_CORE_LIBRARY],
         layer="core",
     ),
-
     # Platform Layer (all Haiku - specialized but template-based)
     AgentType.DEV_PLATFORM_IOS: AgentConfig(
         type=AgentType.DEV_PLATFORM_IOS,
@@ -230,7 +224,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.ARCHITECT],
         layer="platform",
     ),
-
     # Integration Layer (all Haiku)
     AgentType.DEV_INTEGRATION_DATABASE: AgentConfig(
         type=AgentType.DEV_INTEGRATION_DATABASE,
@@ -256,7 +249,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.ARCHITECT],
         layer="integration",
     ),
-
     # Content Layer (all Haiku - text generation is well-specified)
     AgentType.TL_CONTENT: AgentConfig(
         type=AgentType.TL_CONTENT,
@@ -270,7 +262,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_CONTENT],
         layer="content",
     ),
-
     # Graphics Layer (all Haiku - mostly tool invocation)
     AgentType.TL_GRAPHICS: AgentConfig(
         type=AgentType.TL_GRAPHICS,
@@ -284,7 +275,6 @@ FAST_AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_GRAPHICS],
         layer="graphics",
     ),
-
     # ========================================
     # LEGACY ALIASES
     # ========================================
@@ -335,6 +325,7 @@ def get_fast_agent_config(agent_type: AgentType) -> AgentConfig:
 def get_tier_distribution() -> dict:
     """Get count of agents per model tier."""
     from collections import Counter
+
     tiers = Counter(c.model_tier.value for c in FAST_AGENT_CONFIGS)
     return dict(tiers)
 

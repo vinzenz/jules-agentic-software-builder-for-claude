@@ -79,7 +79,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[],  # Dependencies set dynamically based on workflow
         layer="universal",
     ),
-
     # ========================================
     # UI LAYER AGENTS
     # ========================================
@@ -135,7 +134,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_UI_CLI],
         layer="ui",
     ),
-
     # ========================================
     # CORE LAYER AGENTS
     # ========================================
@@ -178,7 +176,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_CORE_LIBRARY],
         layer="core",
     ),
-
     # ========================================
     # PLATFORM LAYER AGENTS
     # ========================================
@@ -218,7 +215,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.ARCHITECT],
         layer="platform",
     ),
-
     # ========================================
     # INTEGRATION LAYER AGENTS
     # ========================================
@@ -246,7 +242,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.ARCHITECT],
         layer="integration",
     ),
-
     # ========================================
     # CONTENT LAYER AGENTS
     # ========================================
@@ -262,7 +257,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_CONTENT],
         layer="content",
     ),
-
     # ========================================
     # GRAPHICS LAYER AGENTS
     # ========================================
@@ -278,7 +272,6 @@ AGENT_CONFIGS_MAP = {
         dependencies=[AgentType.TL_GRAPHICS],
         layer="graphics",
     ),
-
     # ========================================
     # LEGACY ALIASES (backward compatibility)
     # ========================================

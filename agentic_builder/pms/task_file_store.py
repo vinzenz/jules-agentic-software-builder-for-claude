@@ -17,8 +17,8 @@ Directory Structure:
         ...
 """
 
-import json
 import fcntl
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -151,12 +151,14 @@ class TaskFileStore:
         if agent_name not in manifest.get("completed", []):
             manifest["completed"].append(agent_name)
 
-        manifest["tasks"][agent_name].update({
-            "status": "completed",
-            "completed_at": datetime.utcnow().isoformat() + "Z",
-            "tokens_used": tokens_used,
-            "artifact_count": len(artifacts),
-        })
+        manifest["tasks"][agent_name].update(
+            {
+                "status": "completed",
+                "completed_at": datetime.utcnow().isoformat() + "Z",
+                "tokens_used": tokens_used,
+                "artifact_count": len(artifacts),
+            }
+        )
 
         self._write_manifest(manifest)
         logger.debug(f"Completed task for {agent_name}: {len(artifacts)} artifacts")
@@ -169,11 +171,13 @@ class TaskFileStore:
         if agent_name in manifest.get("in_progress", []):
             manifest["in_progress"].remove(agent_name)
 
-        manifest["tasks"][agent_name].update({
-            "status": "failed",
-            "failed_at": datetime.utcnow().isoformat() + "Z",
-            "error": error,
-        })
+        manifest["tasks"][agent_name].update(
+            {
+                "status": "failed",
+                "failed_at": datetime.utcnow().isoformat() + "Z",
+                "error": error,
+            }
+        )
 
         self._write_manifest(manifest)
         logger.debug(f"Failed task for {agent_name}: {error}")
@@ -263,6 +267,7 @@ class TaskFileStore:
     def cleanup(self) -> None:
         """Remove task store (for testing or cleanup)."""
         import shutil
+
         if self.tasks_dir.exists():
             shutil.rmtree(self.tasks_dir)
             logger.debug("Cleaned up task store")

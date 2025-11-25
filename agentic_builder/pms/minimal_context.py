@@ -162,11 +162,13 @@ class MinimalContextSerializer:
 
         if agent_type in dev_to_tl:
             tl = dev_to_tl[agent_type]
-            reads.extend([
-                f".tasks/{tl.value}/output.json",
-                f".tasks/{tl.value}/artifacts.json",
-                ".tasks/ARCHITECT/decisions.json",
-            ])
+            reads.extend(
+                [
+                    f".tasks/{tl.value}/output.json",
+                    f".tasks/{tl.value}/artifacts.json",
+                    ".tasks/ARCHITECT/decisions.json",
+                ]
+            )
         elif agent_type in recommendations:
             reads.extend(recommendations[agent_type])
 

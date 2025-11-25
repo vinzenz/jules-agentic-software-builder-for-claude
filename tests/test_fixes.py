@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +6,7 @@ from agentic_builder.integration.claude_client import ClaudeClient
 from agentic_builder.orchestration.workflow_engine import WorkflowEngine
 
 # --- Tests for Security Fixes ---
+
 
 def test_workflow_engine_prevents_path_traversal():
     """
@@ -42,11 +42,9 @@ def test_workflow_engine_prevents_path_traversal():
     response = AgentOutput(
         success=True,
         summary="Done",
-        artifacts=[
-            Artifact(name=malicious_path, type="file", path=malicious_path, content="hacked")
-        ],
+        artifacts=[Artifact(name=malicious_path, type="file", path=malicious_path, content="hacked")],
         next_steps=[],
-        metadata={}
+        metadata={},
     )
 
     # We need to test the logic inside run_loop.
@@ -72,6 +70,7 @@ def test_workflow_engine_prevents_path_traversal():
                     # Remove from active runs to break the loop
                     del engine._active_runs["test_session"]
                     return response
+
                 claude.call_agent.side_effect = side_effect
 
                 # Run in a temp directory to be safe
@@ -80,6 +79,7 @@ def test_workflow_engine_prevents_path_traversal():
 
                     # Verify write_text was NOT called
                     mock_write.assert_not_called()
+
 
 def test_claude_client_uses_stdin():
     """
@@ -97,10 +97,7 @@ def test_claude_client_uses_stdin():
             mock_prompt.return_value = "System Prompt"
 
             client.call_agent(
-                agent_type=AgentType.PM,
-                prompt="Execute task",
-                user_input=user_input,
-                model=ModelTier.HAIKU
+                agent_type=AgentType.PM, prompt="Execute task", user_input=user_input, model=ModelTier.HAIKU
             )
 
             args, kwargs = mock_run.call_args
