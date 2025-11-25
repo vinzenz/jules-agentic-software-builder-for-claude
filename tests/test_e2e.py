@@ -56,12 +56,15 @@ def test_full_workflow_execution(mock_env_e2e):
         session = session_mgr.load_session(run_id)
         assert session.status == WorkflowStatus.COMPLETED
 
-        # Verify Tasks Created (11 agents)
+        # Verify Tasks Created (all agents in FULL_APP_GENERATION)
         # PMS creates task files.
         # tasks = list(pms._cache.values())  # Or check filesystem
         # Since cache might be empty if we reloaded, check filesystem via manager logic?
         # Actually pms.create_task populates cache.
-        assert len(session.completed_tasks) == 11
+        # FULL_APP_GENERATION includes all agent types
+        from agentic_builder.common.types import AgentType
+
+        assert len(session.completed_tasks) == len(list(AgentType))
 
         # Verify PR creation
         # We can check if pr_mgr.create_pr was called if we mocked it, but we are using "Real" pr_mgr with Mock Env.
