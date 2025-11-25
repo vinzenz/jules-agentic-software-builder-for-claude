@@ -21,6 +21,8 @@ def test_workflow_engine_prevents_path_traversal():
     session.completed_tasks = []
     session_manager.load_session.return_value = session
     session_manager.session_dir = Path("/tmp")
+    # Mock the output_dir property to return the temp directory
+    type(session_manager).output_dir = property(lambda self: Path("/tmp"))
 
     pms = MagicMock()
     git = MagicMock()

@@ -7,7 +7,6 @@ from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
 from agentic_builder.common.events import EventEmitter
 from agentic_builder.common.logging_config import get_logger, log_separator, truncate_for_log
 from agentic_builder.common.types import WorkflowStatus
-from agentic_builder.common.utils import get_project_root
 from agentic_builder.orchestration.session_manager import SessionManager
 from agentic_builder.orchestration.workflows import WorkflowMapper
 from agentic_builder.pms.context_serializer import ContextSerializer
@@ -116,7 +115,7 @@ class WorkflowEngine(EventEmitter):
         log_separator(debug_logger, "CREATING CLAUDE.md")
         debug_logger.debug(f"Creating CLAUDE.md for session {session_id}")
 
-        project_root = get_project_root()
+        project_root = self.session_manager.output_dir
         claude_md_path = project_root / "CLAUDE.md"
 
         # Get the agent execution order for this workflow
@@ -264,8 +263,8 @@ class WorkflowEngine(EventEmitter):
             if response.success:
                 debug_logger.debug(f"Processing successful response for agent {agent_type.value}")
                 created_files = []
-                # Use project root (where .git is) not CWD which may be different
-                root_path = get_project_root().resolve()
+                # Use output_dir as project root for all file operations
+                root_path = self.session_manager.output_dir.resolve()
                 debug_logger.debug(f"Project root path: {root_path}")
 
                 debug_logger.debug(f"Processing {len(response.artifacts)} artifacts...")

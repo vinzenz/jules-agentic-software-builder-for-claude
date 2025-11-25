@@ -12,13 +12,20 @@ logger = get_logger(__name__)
 
 
 class SessionManager:
-    def __init__(self):
+    def __init__(self, output_dir: Optional[Path] = None):
         self._cache: Dict[str, SessionData] = {}
-        logger.debug("SessionManager initialized")
+        # Use provided output_dir or fall back to get_project_root()
+        self._output_dir = output_dir.resolve() if output_dir else get_project_root()
+        logger.debug(f"SessionManager initialized with output_dir: {self._output_dir}")
+
+    @property
+    def output_dir(self) -> Path:
+        """Return the project root directory for all file operations."""
+        return self._output_dir
 
     @property
     def session_dir(self) -> Path:
-        return get_project_root() / ".sessions"
+        return self._output_dir / ".sessions"
 
     def _get_path(self, session_id: str) -> Path:
         return self.session_dir / f"{session_id}.json"
@@ -27,6 +34,7 @@ class SessionManager:
         logger.debug(f"Creating new session for workflow: {workflow_name}")
         if idea:
             logger.debug(f"Project idea: {idea[:100]}..." if len(idea) > 100 else f"Project idea: {idea}")
+        logger.debug(f"Output directory: {self._output_dir}")
         if not self.session_dir.exists():
             logger.debug(f"Creating session directory: {self.session_dir}")
             self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -37,6 +45,7 @@ class SessionManager:
             workflow_name=workflow_name,
             status=WorkflowStatus.PENDING,
             idea=idea,
+            output_dir=str(self._output_dir),
         )
         logger.debug(f"Created session: {session_id}")
         self.save_session(session)

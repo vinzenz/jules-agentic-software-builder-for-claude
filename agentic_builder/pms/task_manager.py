@@ -7,12 +7,19 @@ from agentic_builder.common.utils import get_project_root
 
 
 class TaskManager:
-    def __init__(self):
+    def __init__(self, output_dir: Optional[Path] = None):
         self._cache: Dict[str, Task] = {}
+        # Use provided output_dir or fall back to get_project_root()
+        self._output_dir = output_dir.resolve() if output_dir else get_project_root()
+
+    @property
+    def output_dir(self) -> Path:
+        """Return the project root directory for all file operations."""
+        return self._output_dir
 
     @property
     def task_dir(self) -> Path:
-        return get_project_root() / ".tasks"
+        return self._output_dir / ".tasks"
 
     def _get_path(self, task_id: str) -> Path:
         return self.task_dir / f"{task_id}.json"

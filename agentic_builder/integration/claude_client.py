@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
 from agentic_builder.agents.response_parser import ResponseParser
@@ -25,9 +26,16 @@ DEFAULT_PERMISSION_DENIES = [
 
 
 class ClaudeClient:
-    def __init__(self):
+    def __init__(self, output_dir: Optional[Path] = None):
         self._local_claude_dir = None
-        logger.debug("ClaudeClient initialized")
+        # Use provided output_dir or fall back to get_project_root()
+        self._output_dir = output_dir.resolve() if output_dir else get_project_root()
+        logger.debug(f"ClaudeClient initialized with output_dir: {self._output_dir}")
+
+    @property
+    def output_dir(self) -> Path:
+        """Return the project root directory for agent operations."""
+        return self._output_dir
 
     def _setup_local_claude_config(self, project_root: Path) -> Path:
         """
@@ -119,7 +127,7 @@ class ClaudeClient:
 
         # Run Claude CLI in the project root directory so agents write files
         # to the correct location when using relative paths
-        project_root = get_project_root()
+        project_root = self._output_dir
         logger.debug(f"Working Directory: {project_root}")
 
         # Set up local .claude config directory with credentials and security settings

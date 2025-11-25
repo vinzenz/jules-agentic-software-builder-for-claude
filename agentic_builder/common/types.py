@@ -139,6 +139,7 @@ class SessionData(BaseModel):
     workflow_name: str
     status: WorkflowStatus
     idea: Optional[str] = None  # Project idea/description passed at workflow start
+    output_dir: Optional[str] = None  # Project root directory for all file operations
     start_time: datetime = Field(default_factory=datetime.now)
     current_stage: int = 0
     completed_tasks: List[str] = Field(default_factory=list)
