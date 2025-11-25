@@ -1,169 +1,261 @@
 # CLAUDE.md - AI Assistant Guidelines
 
+
 This document provides guidance for AI assistants working on the Jules Agentic Software Builder for Claude project.
 
 ## Project Overview
 
 **Repository:** jules-agentic-software-builder-for-claude
-**Status:** Initial Development Phase
+**Name:** Agentic Builder
+**Version:** 0.1.0
+**Language:** Python 3.10+
 **Purpose:** An agentic software builder tool designed to work with Claude AI for automated software development tasks.
+**Status:** Initial Development Phase
 
 ## Codebase Structure
 
 ```
 jules-agentic-software-builder-for-claude/
-├── CLAUDE.md          # AI assistant guidelines (this file)
-├── README.md          # Project documentation
-└── (project structure to be established)
+├── CLAUDE.md                    # AI assistant guidelines (this file)
+├── README.md                    # Project documentation
+├── pyproject.toml               # Python project configuration
+├── .gitignore                   # Git ignore rules
+├── agentic_builder/             # Main package
+│   ├── __init__.py
+│   ├── main.py                  # CLI entry point (Typer app)
+│   ├── agents/                  # Agent configurations
+│   │   ├── __init__.py
+│   │   ├── configs.py           # Agent configs and dependency map
+│   │   └── response_parser.py   # Claude response parsing
+│   ├── common/                  # Shared utilities and types
+│   │   ├── __init__.py
+│   │   ├── events.py            # Event emitter system
+│   │   ├── types.py             # Pydantic models and enums
+│   │   └── utils.py             # Utility functions
+│   ├── integration/             # External integrations
+│   │   ├── __init__.py
+│   │   ├── claude_client.py     # Claude CLI wrapper
+│   │   ├── git_manager.py       # Git operations
+│   │   └── pr_manager.py        # GitHub PR creation
+│   ├── orchestration/           # Workflow management
+│   │   ├── __init__.py
+│   │   ├── session_manager.py   # Session persistence
+│   │   ├── workflow_engine.py   # Main execution engine
+│   │   └── workflows.py         # Workflow templates and mapper
+│   └── pms/                     # Project Management System
+│       ├── __init__.py
+│       ├── context_serializer.py # Context XML serialization
+│       └── task_manager.py      # Task CRUD operations
+└── tests/                       # Test suite
+    ├── __init__.py
+    ├── test_agents.py
+    ├── test_cli.py
+    ├── test_common.py
+    ├── test_e2e.py
+    ├── test_fixes.py
+    ├── test_integration.py
+    ├── test_orchestration.py
+    ├── test_pms.py
+    └── test_workflows.py
 ```
 
-### Planned Architecture
+## Core Concepts
 
-As this project develops, the following structure is recommended:
+### Agent Types
 
-```
-├── src/               # Source code
-│   ├── agents/        # Agent implementations
-│   ├── builders/      # Software builder modules
-│   ├── utils/         # Utility functions
-│   └── index.ts       # Main entry point
-├── tests/             # Test files
-├── docs/              # Documentation
-├── config/            # Configuration files
-└── examples/          # Usage examples
-```
+The system uses 11 specialized agent types defined in `agentic_builder/common/types.py`:
+
+| Agent | Description | Model Tier | Dependencies |
+|-------|-------------|------------|--------------|
+| PM | Project Manager | Opus | None |
+| ARCHITECT | System Architect | Opus | PM |
+| UIUX | UI/UX Designer | Sonnet | PM |
+| TL_FRONTEND | Frontend Tech Lead | Sonnet | ARCHITECT, UIUX |
+| TL_BACKEND | Backend Tech Lead | Sonnet | ARCHITECT |
+| DEV_FRONTEND | Frontend Developer | Sonnet | TL_FRONTEND |
+| DEV_BACKEND | Backend Developer | Sonnet | TL_BACKEND |
+| TEST | Test Engineer | Sonnet | DEV_FRONTEND, DEV_BACKEND |
+| CQR | Code Quality Reviewer | Sonnet | DEV_FRONTEND, DEV_BACKEND |
+| SR | Security Reviewer | Opus | DEV_FRONTEND, DEV_BACKEND |
+| DOE | DevOps Engineer | Haiku | DEV_FRONTEND, DEV_BACKEND |
+
+### Workflow Types
+
+Defined in `agentic_builder/orchestration/workflows.py`:
+
+- `FULL_APP_GENERATION` - All agents participate
+- `FEATURE_ADDITION` - Most agents except DOE
+- `BUG_FIX` - PM, TLs, DEVs, TEST
+- `REFACTORING` - ARCHITECT, TLs, DEVs, CQR
+- `TEST_GENERATION` - TEST only
+- `CODE_REVIEW` - CQR only
+- `SECURITY_AUDIT` - SR only
+
+### Key Classes
+
+- **WorkflowEngine** (`orchestration/workflow_engine.py`): Main orchestrator that manages workflow execution, agent spawning, and event emission
+- **SessionManager** (`orchestration/session_manager.py`): Handles session persistence and status tracking
+- **TaskManager** (`pms/task_manager.py`): CRUD operations for tasks with JSON file storage
+- **ClaudeClient** (`integration/claude_client.py`): Wrapper for Claude CLI invocation
 
 ## Development Workflows
 
-### Getting Started
+### Setup
 
-1. Clone the repository
-2. Install dependencies (once package.json is established)
-3. Review this CLAUDE.md for conventions
+```bash
+# Install in development mode
+pip install -e .
 
-### Git Workflow
+# Install with dev dependencies
+pip install -e ".[dev]"
+```
 
-- **Main branch:** Contains stable, production-ready code
-- **Feature branches:** Use descriptive names like `feature/agent-builder`, `fix/error-handling`
-- **Commit messages:** Use conventional commits format:
-  - `feat:` for new features
-  - `fix:` for bug fixes
-  - `docs:` for documentation changes
-  - `refactor:` for code refactoring
-  - `test:` for test additions/changes
-  - `chore:` for maintenance tasks
+### Running Tests
 
-### Code Review
+```bash
+# Run all tests
+pytest
 
-- All changes should be made via pull requests
-- Ensure tests pass before merging
-- Keep PRs focused and reasonably sized
+# Run specific test file
+pytest tests/test_workflows.py
+
+# Run with verbose output
+pytest -v
+```
+
+### Linting
+
+```bash
+# Run ruff linter
+ruff check .
+
+# Fix auto-fixable issues
+ruff check --fix .
+```
+
+### CLI Usage
+
+```bash
+# Start a workflow
+agentic-builder run FULL_APP_GENERATION
+
+# List sessions
+agentic-builder list
+agentic-builder list --all
+agentic-builder list --zombies
+
+# View session status
+agentic-builder status <session-id>
+
+# View logs
+agentic-builder logs <session-id>
+
+# Cancel a workflow
+agentic-builder cancel <session-id>
+
+# Resume a workflow
+agentic-builder resume <session-id>
+
+# Show token usage
+agentic-builder usage
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `AMAB_MOCK_CLAUDE_CLI` | Set to `1` to mock Claude CLI responses |
+| `AMAB_MOCK_GH_CLI` | Set to `1` to mock GitHub CLI (PR creation) |
 
 ## Key Conventions
 
 ### Code Style
 
-- Use TypeScript for type safety (recommended)
-- Follow consistent naming conventions:
-  - `camelCase` for variables and functions
-  - `PascalCase` for classes and interfaces
-  - `UPPER_SNAKE_CASE` for constants
-- Keep functions focused and single-purpose
-- Document public APIs with JSDoc comments
+- **Line length:** 120 characters (configured in `pyproject.toml`)
+- **Target Python:** 3.10+
+- **Linter:** Ruff with E, F, I rules enabled
+- **Type hints:** Use Pydantic models for data classes
+- **Naming:**
+  - `snake_case` for functions and variables
+  - `PascalCase` for classes
+  - `UPPER_SNAKE_CASE` for constants and enum values
 
 ### File Organization
 
-- One component/module per file
-- Group related functionality in directories
-- Use index files for clean exports
-- Keep test files adjacent to source files or in a parallel `tests/` directory
+- One class per file for major components
+- Group related functionality in subdirectories
+- Use `__init__.py` for clean imports
+- Keep tests in parallel structure under `tests/`
+
+### Data Storage
+
+- Sessions stored in `.sessions/` directory (gitignored)
+- Tasks stored in `.tasks/` directory (gitignored)
+- Use JSON format for persistence
+- Task IDs follow `TASK-0001` format
 
 ### Error Handling
 
-- Use explicit error types when possible
-- Provide meaningful error messages
-- Handle errors at appropriate boundaries
-- Log errors with context for debugging
+- Return `AgentOutput` with `success=False` for failures
+- Use event emission for workflow failures
+- Log errors with context to session-specific log files
+- Security: Validate file paths to prevent directory traversal
 
 ### Testing
 
-- Write tests for new functionality
-- Maintain test coverage for critical paths
-- Use descriptive test names that explain the scenario
-- Follow the Arrange-Act-Assert pattern
+- Use pytest as the test framework
+- Mock external dependencies (Claude CLI, GitHub CLI)
+- Test topological sorting of agent dependencies
+- Test workflow execution order
 
 ## AI Assistant Instructions
 
 ### When Working on This Project
 
-1. **Read before modifying:** Always read existing code before making changes
-2. **Understand context:** Check related files and dependencies
-3. **Preserve conventions:** Follow established patterns in the codebase
-4. **Minimal changes:** Only modify what's necessary for the task
-5. **Test changes:** Run tests after modifications when available
+1. **Understand the agent dependency graph** before modifying workflow logic
+2. **Preserve event emission patterns** - the CLI relies on events for feedback
+3. **Use Pydantic models** for any new data structures
+4. **Add tests** for new functionality in the appropriate test file
+5. **Security-first**: Always validate file paths before writing
 
-### Task Planning
+### Common Tasks
 
-- Break complex tasks into smaller steps
-- Use TodoWrite to track multi-step tasks
-- Complete one step before moving to the next
-- Verify each change works before proceeding
+**Adding a new agent type:**
+1. Add enum value to `AgentType` in `common/types.py`
+2. Add configuration to `AGENT_CONFIGS_MAP` in `agents/configs.py`
+3. Update workflow templates in `orchestration/workflows.py`
+4. Add agent prompt file to `prompts/agents/<AGENT_TYPE>.xml`
 
-### Common Commands
+**Adding a new workflow:**
+1. Add enum value to `WorkflowType` in `orchestration/workflows.py`
+2. Add agent list to `WORKFLOW_TEMPLATES`
+3. Handle alias in `WorkflowMapper.get_execution_order()` if needed
 
-```bash
-# Once the project is set up, common commands will include:
-npm install        # Install dependencies
-npm run build      # Build the project
-npm run test       # Run tests
-npm run lint       # Check code style
-npm run dev        # Start development mode
-```
+**Adding a new CLI command:**
+1. Add function with `@app.command()` decorator in `main.py`
+2. Use `rich.console.Console` for output formatting
+3. Follow existing patterns for error handling
 
-### Areas of Focus
+### Files to Read First
 
-When contributing to this project, pay attention to:
+When working on a task, start by reading:
+1. `agentic_builder/common/types.py` - Core data models
+2. `agentic_builder/agents/configs.py` - Agent dependency graph
+3. `agentic_builder/orchestration/workflow_engine.py` - Main execution logic
 
-- **Agent reliability:** Ensure agents handle edge cases gracefully
-- **Builder modularity:** Keep builder components loosely coupled
-- **Error resilience:** Implement proper error handling and recovery
-- **Documentation:** Keep docs in sync with code changes
-- **Performance:** Consider efficiency in agent loops and build processes
+### Security Considerations
 
-## Project-Specific Notes
+- **Path traversal prevention**: Always use `Path.is_relative_to()` before writing files
+- **No credentials in code**: Use environment variables for secrets
+- **Subprocess safety**: Use list form for `subprocess.run()` commands
+- **Input validation**: Validate all external inputs before processing
 
-### Jules Agentic Builder Concepts
+## Git Workflow
 
-This project implements an agentic approach to software building, which involves:
-
-1. **Task decomposition:** Breaking down software tasks into manageable steps
-2. **Autonomous execution:** Agents that can work independently with minimal supervision
-3. **Tool integration:** Leveraging Claude's capabilities for code generation and analysis
-4. **Iterative refinement:** Building software through progressive improvements
-
-### Integration with Claude
-
-- Design for Claude's context window limitations
-- Structure prompts for optimal code generation
-- Include validation steps for generated code
-- Implement feedback loops for iterative improvement
-
-## Security Considerations
-
-- Never commit secrets, API keys, or credentials
-- Use environment variables for sensitive configuration
-- Validate all external inputs
-- Follow OWASP guidelines for secure coding practices
-- Review generated code for security vulnerabilities
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes following these guidelines
-4. Submit a pull request with clear description
-5. Address review feedback promptly
+- **Commit messages:** Use conventional commits (feat:, fix:, docs:, refactor:, test:, chore:)
+- **Branch naming:** `feature/<description>`, `fix/<description>`
+- **PR creation:** Draft PRs are created automatically after workflow completion
 
 ---
 
-*This document should be updated as the project evolves. Keep it current with actual conventions and structures used in the codebase.*
+*Last updated: 2024 - Keep this document in sync with codebase changes.*
