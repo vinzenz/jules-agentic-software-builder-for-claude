@@ -2,7 +2,7 @@
 name: sprite-sheet-generator
 description: Generate sprite sheets for games and animations. Combines individual frames into optimized sprite atlases with accompanying JSON metadata for game engines.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

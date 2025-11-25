@@ -2,7 +2,7 @@
 name: api-client-generator
 description: Generate type-safe API client code for frontend-backend communication. Creates TypeScript interfaces, API client functions with error handling, and React Query/SWR hooks.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

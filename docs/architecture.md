@@ -54,7 +54,7 @@ These agents apply to ALL software projects regardless of type:
 | PM | Project Manager | Opus | Analyzes requirements, creates project plan, coordinates workflow |
 | ARCHITECT | System Architect | Opus | Designs technical architecture, selects technologies |
 | UIUX_GUI | UI/UX Designer (GUI) | Opus | Designs visual interfaces (Web, Mobile, Desktop) - wireframes, design systems, visual accessibility |
-| UIUX_CLI | UX Designer (CLI) | Opus | Designs CLI user experience - command structure, help text, error messages, output formatting |
+| UIUX_CLI | UX Designer (CLI) | Sonnet | Designs CLI user experience - command structure, help text, error messages, output formatting |
 | TEST | Test Engineer | Sonnet | Creates and executes tests across all layers |
 | CQR | Code Quality Reviewer | Sonnet | Reviews code quality, style, maintainability |
 | SR | Security Reviewer | Opus | Audits security vulnerabilities |

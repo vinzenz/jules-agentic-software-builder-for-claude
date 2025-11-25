@@ -2,7 +2,7 @@
 name: model-generator
 description: Generate database model/entity definitions with proper ORM mappings and validations. Creates SQLAlchemy/Prisma/TypeORM models with relationships, migrations, and test factories.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

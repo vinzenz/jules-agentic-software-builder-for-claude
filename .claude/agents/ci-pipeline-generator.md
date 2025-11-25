@@ -2,7 +2,7 @@
 name: ci-pipeline-generator
 description: Generate CI/CD pipeline configurations for automated testing, building, and deployment. Creates GitHub Actions, GitLab CI, Jenkins, or CircleCI configurations with proper caching, parallel execution, and deployment stages.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

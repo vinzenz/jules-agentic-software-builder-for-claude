@@ -2,7 +2,7 @@
 name: background-remover
 description: Remove backgrounds from images using AI-powered segmentation. Supports batch processing, edge refinement, and multiple output formats including PNG with transparency.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

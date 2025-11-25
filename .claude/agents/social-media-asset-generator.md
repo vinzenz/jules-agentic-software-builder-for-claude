@@ -2,7 +2,7 @@
 name: social-media-asset-generator
 description: Generate social media graphics and assets for multiple platforms. Creates posts, stories, covers, ads, and profile images with proper dimensions and platform-specific requirements.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

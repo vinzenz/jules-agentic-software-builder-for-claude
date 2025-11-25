@@ -2,7 +2,7 @@
 name: localization-generator
 description: Generate internationalization (i18n) infrastructure and localization files. Extracts translatable strings, creates translation catalogs, and sets up locale-aware formatting.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

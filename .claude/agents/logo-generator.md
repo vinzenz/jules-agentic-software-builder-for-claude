@@ -2,7 +2,7 @@
 name: logo-generator
 description: Generate logo concepts using AI image generation and programmatic design. Creates wordmarks, icon-based logos, and combination marks with variations for different use cases.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

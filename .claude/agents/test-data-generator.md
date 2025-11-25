@@ -2,7 +2,7 @@
 name: test-data-generator
 description: Generate realistic test data, fixtures, and factories for testing purposes. Creates factory classes, fixture files, and seed scripts with proper referential integrity.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

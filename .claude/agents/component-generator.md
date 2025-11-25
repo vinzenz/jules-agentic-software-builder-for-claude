@@ -2,7 +2,7 @@
 name: component-generator
 description: Generate UI component boilerplate for web, mobile, and desktop platforms. Creates React/Vue/Svelte, React Native/Flutter, Qt/Electron components with proper structure, types, and test stubs.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

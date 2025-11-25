@@ -2,7 +2,7 @@
 name: mockup-generator
 description: Generate product mockups by compositing designs onto device frames and scene templates. Supports phones, tablets, laptops, packaging, and marketing materials.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

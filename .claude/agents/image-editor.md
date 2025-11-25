@@ -2,7 +2,7 @@
 name: image-editor
 description: Perform basic image editing operations including resize, crop, rotate, flip, color adjustments, filters, and batch transformations.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

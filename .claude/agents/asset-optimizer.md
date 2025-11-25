@@ -2,7 +2,7 @@
 name: asset-optimizer
 description: Optimize images and assets for web, mobile, and desktop platforms. Handles compression, format conversion, responsive image generation, and lazy loading preparation.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

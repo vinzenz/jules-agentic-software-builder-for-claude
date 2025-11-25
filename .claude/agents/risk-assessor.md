@@ -2,7 +2,7 @@
 name: risk-assessor
 description: Identify, analyze, and propose mitigations for project risks. Covers technical, schedule, resource, and external risks with probability/impact assessment and mitigation strategies.
 tools: Read, Grep, Glob
-model: sonnet
+model: opus
 ---
 
 <agent-instructions>
