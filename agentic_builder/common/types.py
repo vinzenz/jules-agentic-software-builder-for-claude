@@ -78,6 +78,7 @@ class SessionData(BaseModel):
     id: str
     workflow_name: str
     status: WorkflowStatus
+    idea: Optional[str] = None  # Project idea/description passed at workflow start
     start_time: datetime = Field(default_factory=datetime.now)
     current_stage: int = 0
     completed_tasks: List[str] = Field(default_factory=list)

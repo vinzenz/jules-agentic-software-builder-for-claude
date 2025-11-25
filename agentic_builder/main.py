@@ -52,9 +52,25 @@ def get_engine():
 
 
 @app.command()
-def run(workflow: str):
-    """Start a new workflow."""
+def run(
+    workflow: str = typer.Argument(..., help="Workflow type (e.g., FULL_APP_GENERATION, FEATURE_ADDITION)"),
+    idea: str = typer.Option(
+        None,
+        "--idea",
+        "-i",
+        help="Project idea or description. This will be passed to agents and written to CLAUDE.md",
+    ),
+):
+    """
+    Start a new workflow.
+
+    Examples:
+        agentic-builder run FULL_APP_GENERATION --idea "Build a todo app with React and FastAPI"
+        agentic-builder run FEATURE_ADDITION -i "Add user authentication with OAuth2"
+    """
     console.print(f"[bold green]Starting workflow:[/bold green] {workflow}")
+    if idea:
+        console.print(f"[bold blue]Project Idea:[/bold blue] {idea}")
 
     engine = get_engine()
 
@@ -68,12 +84,16 @@ def run(workflow: str):
     def on_fail(data):
         console.print(f"  [red]Failed:[/red] {data.get('error')}")
 
+    def on_claude_md_created(data):
+        console.print(f"  [blue]Created CLAUDE.md:[/blue] {data['path']}")
+
     engine.on("agent_spawned", on_stage_start)
     engine.on("agent_completed", on_agent_complete)
     engine.on("workflow_failed", on_fail)
+    engine.on("claude_md_created", on_claude_md_created)
 
     try:
-        run_id = engine.start_workflow(workflow)
+        run_id = engine.start_workflow(workflow, idea=idea)
         console.print(f"[bold green]Workflow Completed![/bold green] Run ID: {run_id}")
     except Exception as e:
         console.print(f"[bold red]Workflow Failed:[/bold red] {e}")

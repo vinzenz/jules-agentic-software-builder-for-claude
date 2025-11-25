@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from agentic_builder.common.logging_config import get_logger, log_separator
 from agentic_builder.common.types import Task
@@ -9,11 +9,16 @@ logger = get_logger(__name__)
 
 class ContextSerializer:
     @staticmethod
-    def serialize(task: Task, dependency_tasks: Dict[str, Task] = None) -> str:
+    def serialize(
+        task: Task,
+        dependency_tasks: Dict[str, Task] = None,
+        project_idea: Optional[str] = None,
+    ) -> str:
         """
         Serialize task context to XML format.
 
         Includes:
+        - Project idea (if provided - passed to first agent like PM)
         - Task info (id, role, description)
         - Dependency outputs (summary, next_steps, warnings, file paths)
 
@@ -24,6 +29,8 @@ class ContextSerializer:
         logger.debug(f"Task ID: {task.id}")
         logger.debug(f"Agent Type: {task.agent_type.value}")
         logger.debug(f"Description: {task.description}")
+        if project_idea:
+            logger.debug(f"Project Idea: {project_idea[:100]}..." if len(project_idea) > 100 else f"Project Idea: {project_idea}")
 
         if dependency_tasks is None:
             dependency_tasks = {}
@@ -31,6 +38,13 @@ class ContextSerializer:
         logger.debug(f"Number of dependency tasks: {len(dependency_tasks)}")
 
         xml = ["<task_context>"]
+
+        # Include project idea at the top for agents to understand what to build
+        if project_idea:
+            xml.append("  <project_idea>")
+            xml.append(f"    {_escape_xml(project_idea)}")
+            xml.append("  </project_idea>")
+
         xml.append(f"  <task_id>{task.id}</task_id>")
         xml.append(f"  <agent_role>{task.agent_type.value}</agent_role>")
         xml.append(f"  <description>{task.description}</description>")

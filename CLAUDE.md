@@ -177,11 +177,14 @@ ruff check --fix .
 ### CLI Usage
 
 ```bash
-# Start a workflow
-agentic-builder run FULL_APP_GENERATION
+# Start a workflow with a project idea (required for meaningful output)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app with React and FastAPI"
+
+# Short form for idea parameter
+agentic-builder run FEATURE_ADDITION -i "Add user authentication with OAuth2"
 
 # Start a workflow with debug logging (see prompts and responses)
-agentic-builder --debug run FULL_APP_GENERATION
+agentic-builder --debug run FULL_APP_GENERATION --idea "Your project idea"
 
 # List sessions
 agentic-builder list
@@ -203,6 +206,16 @@ agentic-builder resume <session-id>
 # Show token usage
 agentic-builder usage
 ```
+
+### Project Idea Parameter
+
+The `--idea` / `-i` parameter is used to describe what you want to build. When provided:
+
+1. **CLAUDE.md file is created** in the project root with the project context
+2. **Idea is passed to all agents** via the context XML, so they know what to build
+3. **Idea is stored in session data** for reference and resumption
+
+The idea is especially important for the PM agent, which uses it to plan the project.
 
 ### Debug Logging
 
