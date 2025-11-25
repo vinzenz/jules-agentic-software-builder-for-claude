@@ -1,6 +1,7 @@
 # CLAUDE.md - AI Assistant Guidelines
 
-This document provides guidance for AI assistants working on the Agentic Builder project.
+
+This document provides guidance for AI assistants working on the Jules Agentic Software Builder for Claude project.
 
 ## Project Overview
 
@@ -8,7 +9,8 @@ This document provides guidance for AI assistants working on the Agentic Builder
 **Name:** Agentic Builder
 **Version:** 0.1.0
 **Language:** Python 3.10+
-**Purpose:** Multi-agent orchestration framework for mobile app development using Claude AI
+**Purpose:** An agentic software builder tool designed to work with Claude AI for automated software development tasks.
+**Status:** Initial Development Phase
 
 ## Codebase Structure
 
