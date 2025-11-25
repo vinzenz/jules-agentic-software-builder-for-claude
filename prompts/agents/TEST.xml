@@ -2,8 +2,55 @@
 <objective>
 Write and execute tests for the application.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="unit-test-generator">
+    <purpose>Generate comprehensive unit tests for functions and components</purpose>
+    <use_when>Need to test individual units in isolation</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="integration-test-generator">
+    <purpose>Generate integration tests for component interactions</purpose>
+    <use_when>Need to test API endpoints and database operations</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="e2e-test-generator">
+    <purpose>Generate end-to-end tests for user workflows</purpose>
+    <use_when>Need to test complete user journeys through the application</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="test-data-generator">
+    <purpose>Generate test fixtures, factories, and seed data</purpose>
+    <use_when>Need realistic test data for any test type</use_when>
+    <can_parallel>false</can_parallel>
+    <note>Generate test data first, then other tests can use it</note>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    After test data is ready, unit tests, integration tests, and E2E tests
+    can all be generated in parallel as they target different layers.
+  </parallel_tasks>
+  <sequential_tasks>
+    1. test-data-generator (creates fixtures and factories)
+    2. unit-test-generator, integration-test-generator, e2e-test-generator (in parallel)
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Create unit and integration tests.
-2. Verify acceptance criteria.
-3. Report bugs.
+1. Review implemented code from DEV_FRONTEND and DEV_BACKEND.
+2. Use the orchestrator skill to plan testing work.
+3. Delegate to sub-agents:
+   - First: test-data-generator for fixtures and factories
+   - Then in parallel:
+     - unit-test-generator for unit tests
+     - integration-test-generator for API/DB tests
+     - e2e-test-generator for user flow tests
+4. Create unit and integration tests.
+5. Verify acceptance criteria.
+6. Report bugs and coverage gaps.
+7. Output test files and coverage report.
 </instructions>

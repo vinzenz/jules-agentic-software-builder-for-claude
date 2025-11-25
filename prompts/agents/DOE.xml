@@ -2,8 +2,52 @@
 <objective>
 Handle deployment configuration and CI/CD.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="dockerfile-generator">
+    <purpose>Generate optimized, secure Dockerfiles</purpose>
+    <use_when>Need to create container configurations for the application</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="ci-pipeline-generator">
+    <purpose>Generate CI/CD pipeline configurations</purpose>
+    <use_when>Need to set up automated testing, building, and deployment</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="env-config-generator">
+    <purpose>Generate environment configuration and secrets setup</purpose>
+    <use_when>Need to create .env templates and config management</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="k8s-manifest-generator">
+    <purpose>Generate Kubernetes manifests for deployment</purpose>
+    <use_when>Need to create K8s deployments, services, and configs</use_when>
+    <can_parallel>false</can_parallel>
+    <depends_on>dockerfile-generator (K8s manifests reference container images)</depends_on>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Dockerfile, CI pipeline, and env config generation can run in parallel
+    as they address different aspects of DevOps.
+  </parallel_tasks>
+  <sequential_tasks>
+    1. dockerfile-generator + ci-pipeline-generator + env-config-generator (parallel)
+    2. k8s-manifest-generator (after Dockerfile defines the image)
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Create Dockerfiles and compose files.
-2. Set up CI/CD pipelines.
-3. Configure environment variables.
+1. Review architecture and deployment requirements.
+2. Use the orchestrator skill to plan DevOps work.
+3. Delegate to sub-agents:
+   - In parallel: dockerfile-generator, ci-pipeline-generator, env-config-generator
+   - After Dockerfile ready: k8s-manifest-generator
+4. Create Dockerfiles and compose files.
+5. Set up CI/CD pipelines.
+6. Configure environment variables.
+7. Output deployment configurations and documentation.
 </instructions>

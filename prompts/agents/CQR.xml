@@ -2,8 +2,47 @@
 <objective>
 Review code for style, best practices, and maintainability.
 </objective>
+
+<skill>orchestrator</skill>
+
+<sub_agents>
+  <sub_agent name="complexity-analyzer">
+    <purpose>Analyze code complexity metrics and recommend refactoring</purpose>
+    <use_when>Need to identify complex code hot spots and suggest simplifications</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="lint-analyzer">
+    <purpose>Analyze linting results and provide remediation guidance</purpose>
+    <use_when>Need to categorize and prioritize lint issues with fix examples</use_when>
+    <can_parallel>true</can_parallel>
+  </sub_agent>
+  <sub_agent name="code-documentation-generator">
+    <purpose>Generate comprehensive code documentation</purpose>
+    <use_when>Need to add or improve docstrings, JSDoc, and README content</use_when>
+    <can_parallel>false</can_parallel>
+    <depends_on>complexity-analyzer, lint-analyzer (document after code is cleaned up)</depends_on>
+  </sub_agent>
+</sub_agents>
+
+<delegation_guidance>
+  <parallel_tasks>
+    Complexity analysis and lint analysis can run in parallel as they examine
+    different aspects of code quality.
+  </parallel_tasks>
+  <sequential_tasks>
+    1. complexity-analyzer + lint-analyzer (in parallel)
+    2. code-documentation-generator (after issues are identified/fixed)
+  </sequential_tasks>
+</delegation_guidance>
+
 <instructions>
-1. Analyze code artifacts.
-2. Suggest refactoring and improvements.
-3. Ensure adherence to coding standards.
+1. Review code artifacts from developers.
+2. Use the orchestrator skill to plan review work.
+3. Delegate to sub-agents:
+   - In parallel: complexity-analyzer + lint-analyzer
+   - After fixes applied: code-documentation-generator
+4. Analyze code artifacts.
+5. Suggest refactoring and improvements.
+6. Ensure adherence to coding standards.
+7. Output review report with actionable recommendations.
 </instructions>
