@@ -75,6 +75,8 @@ def get_orchestrator(
     output_dir: Path,
     orchestrator_type: OrchestratorType = OrchestratorType.ADAPTIVE,
     constraints: Optional[WorkflowConstraints] = None,
+    use_long_running_session: bool = False,
+    stream_log_to_console: bool = False,
 ) -> Union[WorkflowEngine, ParallelWorkflowEngine, AdaptiveOrchestrator]:
     """
     Factory function to create the appropriate orchestrator.
@@ -83,6 +85,8 @@ def get_orchestrator(
         output_dir: Project root directory for all file operations.
         orchestrator_type: Type of orchestrator to use.
         constraints: Workflow constraints (scope, full_feature, etc.)
+        use_long_running_session: Use single persistent CLI process (adaptive only).
+        stream_log_to_console: Log streamed messages to console (adaptive only).
 
     Returns:
         Configured orchestrator instance.
@@ -93,6 +97,8 @@ def get_orchestrator(
         return AdaptiveOrchestrator(
             project_root=resolved_output_dir,
             constraints=constraints,
+            use_long_running_session=use_long_running_session,
+            stream_log_to_console=stream_log_to_console,
         )
 
     elif orchestrator_type == OrchestratorType.PARALLEL:
@@ -155,6 +161,17 @@ def run(
         "-s",
         help="Feature scope: mvp (minimal), standard (common features), comprehensive (all features)",
     ),
+    long_running_session: bool = typer.Option(
+        False,
+        "--long-running-session",
+        "-l",
+        help="Use a single persistent CLI process instead of spawning per-agent (faster, adaptive only)",
+    ),
+    stream_log: bool = typer.Option(
+        False,
+        "--stream-log",
+        help="Log all streamed messages to/from Claude to console (requires --long-running-session)",
+    ),
 ):
     """
     Start a new workflow.
@@ -174,6 +191,10 @@ def run(
 
     Non-interactive mode:
         agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --no-interactive
+
+    Long-running session with stream logging:
+        agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --long-running-session
+        agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -l --stream-log
     """
     # Use provided output_dir or default to CWD
     resolved_output_dir = output_dir if output_dir else Path.cwd()
@@ -217,6 +238,24 @@ def run(
     if not interactive:
         console.print("[bold yellow]Interactive:[/bold yellow] Disabled")
 
+    # Validate long-running session options
+    if long_running_session:
+        if orch_type != OrchestratorType.ADAPTIVE:
+            console.print(
+                "[bold yellow]Warning:[/bold yellow] --long-running-session only works with adaptive orchestrator"
+            )
+            long_running_session = False
+        else:
+            console.print("[bold cyan]Session Mode:[/bold cyan] Long-running (single CLI process)")
+            if stream_log:
+                console.print("[bold cyan]Stream Logging:[/bold cyan] Enabled (console)")
+            else:
+                console.print("[dim]Stream logs: .tasks/logs/stream_*.log[/dim]")
+
+    if stream_log and not long_running_session:
+        console.print("[bold yellow]Warning:[/bold yellow] --stream-log requires --long-running-session")
+        stream_log = False
+
     # Create output directory if it doesn't exist
     if not resolved_output_dir.exists():
         console.print(f"[yellow]Creating output directory:[/yellow] {resolved_output_dir}")
@@ -227,6 +266,8 @@ def run(
         output_dir=resolved_output_dir,
         orchestrator_type=orch_type,
         constraints=constraints,
+        use_long_running_session=long_running_session,
+        stream_log_to_console=stream_log,
     )
 
     # Handle different orchestrator types

@@ -9,11 +9,14 @@ Key Features:
 - Specialized architects spawn only needed implementation agents
 - Confidence-level decisions (high/medium/low)
 - Skip propagation prevents unnecessary agent runs
+- Optional long-running CLI session for reduced overhead
+- Real-time stream logging for debugging
 
 Performance:
 - Simple web app: 6 agents instead of 40 (85% reduction)
 - Mobile app: 10 agents instead of 40 (75% reduction)
 - CLI tool: 4 agents instead of 40 (90% reduction)
+- Long-running session: Additional ~2x speedup (single CLI startup)
 """
 
 import json
@@ -22,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from agentic_builder.common.logging_config import get_logger
 from agentic_builder.common.types import ScopeLevel, WorkflowConstraints
@@ -98,6 +101,12 @@ class AdaptiveOrchestrator:
 
     Instead of a predefined workflow, each agent determines what comes next.
     This dramatically reduces the number of agents run for simple projects.
+
+    Supports two execution modes:
+    1. Per-agent subprocess (default): Each agent spawns a new Claude CLI process
+    2. Long-running session: Single CLI process handles all agents (faster, with streaming)
+
+    Stream logging captures all messages to/from Claude for debugging.
     """
 
     TASKS_DIR = ".tasks"
@@ -128,7 +137,21 @@ class AdaptiveOrchestrator:
         project_root: Path,
         interactive: bool = True,
         constraints: Optional[WorkflowConstraints] = None,
+        use_long_running_session: bool = False,
+        stream_log_to_console: bool = False,
+        on_stream_message: Optional[Callable[[Any], None]] = None,
     ):
+        """
+        Initialize the adaptive orchestrator.
+
+        Args:
+            project_root: Working directory for the project
+            interactive: Whether to prompt for user input
+            constraints: Optional workflow constraints
+            use_long_running_session: If True, use a single persistent CLI process
+            stream_log_to_console: If True, log all streamed messages to console
+            on_stream_message: Optional callback for each streamed message
+        """
         self.project_root = Path(project_root)
         self.tasks_dir = self.project_root / self.TASKS_DIR
         self.constraints = constraints or WorkflowConstraints()
@@ -138,6 +161,12 @@ class AdaptiveOrchestrator:
         self.completed_agents: Set[str] = set()
         self.decision_log: List[Dict[str, Any]] = []
         self.user_decisions: Dict[str, str] = {}
+
+        # Long-running session configuration
+        self.use_long_running_session = use_long_running_session
+        self.stream_log_to_console = stream_log_to_console
+        self.on_stream_message = on_stream_message
+        self._cli_session = None
 
     def run_workflow(self, project_idea: str, session_id: Optional[str] = None) -> Dict:
         """Run an adaptive workflow."""
@@ -149,32 +178,78 @@ class AdaptiveOrchestrator:
         # Initialize
         self._initialize_session(session_id, project_idea)
 
-        # Start with PM
-        pending_spawns = [SpawnRequest(agent="PM", reason="Initial analysis")]
+        # Start long-running session if enabled
+        if self.use_long_running_session:
+            self._start_cli_session(session_id)
 
-        while pending_spawns:
-            # Get next batch of agents to run (can be parallel)
-            batch = self._get_parallel_batch(pending_spawns)
-            pending_spawns = [s for s in pending_spawns if s not in batch]
+        try:
+            # Start with PM
+            pending_spawns = [SpawnRequest(agent="PM", reason="Initial analysis")]
 
-            # Run batch
-            for spawn in batch:
-                if spawn.agent in self.skipped_agents:
-                    logger.info(f"Skipping {spawn.agent} (previously decided)")
-                    continue
+            while pending_spawns:
+                # Get next batch of agents to run (can be parallel)
+                batch = self._get_parallel_batch(pending_spawns)
+                pending_spawns = [s for s in pending_spawns if s not in batch]
 
-                if spawn.agent in self.completed_agents:
-                    logger.info(f"Skipping {spawn.agent} (already completed)")
-                    continue
+                # Run batch
+                for spawn in batch:
+                    if spawn.agent in self.skipped_agents:
+                        logger.info(f"Skipping {spawn.agent} (previously decided)")
+                        continue
 
-                output = self._run_agent(spawn)
-                if output:
-                    # Process output
-                    new_spawns = self._process_agent_output(spawn.agent, output)
-                    pending_spawns.extend(new_spawns)
+                    if spawn.agent in self.completed_agents:
+                        logger.info(f"Skipping {spawn.agent} (already completed)")
+                        continue
 
-        # Finalize
-        return self._finalize_workflow(session_id)
+                    output = self._run_agent(spawn)
+                    if output:
+                        # Process output
+                        new_spawns = self._process_agent_output(spawn.agent, output)
+                        pending_spawns.extend(new_spawns)
+
+            # Finalize
+            return self._finalize_workflow(session_id)
+
+        finally:
+            # Ensure session is stopped
+            if self._cli_session:
+                self._stop_cli_session()
+
+    def _start_cli_session(self, session_id: str) -> None:
+        """Start the long-running CLI session."""
+        from agentic_builder.integration.long_running_session import (
+            LongRunningCLISession,
+            StreamEvent,
+        )
+
+        logger.info("Starting long-running CLI session")
+
+        # Create log file path
+        log_dir = self.tasks_dir / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f"stream_{session_id}.log"
+
+        # Create stream event handler
+        def on_stream_event(event: StreamEvent) -> None:
+            if self.on_stream_message:
+                self.on_stream_message(event)
+
+        self._cli_session = LongRunningCLISession(
+            project_root=self.project_root,
+            stream_log_file=log_file,
+            log_to_console=self.stream_log_to_console,
+            on_stream_event=on_stream_event,
+        )
+        self._cli_session.start()
+
+        logger.info(f"Long-running CLI session started, logs: {log_file}")
+
+    def _stop_cli_session(self) -> None:
+        """Stop the long-running CLI session."""
+        if self._cli_session:
+            logger.info("Stopping long-running CLI session")
+            self._cli_session.stop()
+            self._cli_session = None
 
     def _initialize_session(self, session_id: str, project_idea: str) -> None:
         """Initialize the session and tasks directory."""
@@ -238,8 +313,6 @@ class AdaptiveOrchestrator:
 
     def _invoke_agent(self, subagent_type: str, context: Dict) -> AgentOutput:
         """Invoke an agent via Claude CLI and parse its output."""
-        import subprocess
-
         # Build the prompt for the agent
         manifest = self._load_manifest()
         prompt = f"""Execute your role for this project.
@@ -264,6 +337,41 @@ When done, output your results in JSON format with these fields:
 
         logger.info(f"Invoking agent: {subagent_type}")
         logger.debug(f"Prompt: {prompt[:500]}...")
+
+        # Use long-running session if available
+        if self._cli_session and self._cli_session.is_running():
+            return self._invoke_agent_via_session(subagent_type, prompt)
+        else:
+            return self._invoke_agent_via_subprocess(subagent_type, prompt)
+
+    def _invoke_agent_via_session(self, subagent_type: str, prompt: str) -> AgentOutput:
+        """Invoke an agent via the long-running CLI session."""
+        logger.info(f"Using long-running session for agent: {subagent_type}")
+
+        try:
+            # Send prompt to the session and get response
+            response = self._cli_session.send_prompt(prompt, timeout=600.0)
+
+            # Parse the output
+            return self._parse_agent_output(subagent_type, response)
+
+        except TimeoutError:
+            logger.error(f"Agent {subagent_type} timed out in long-running session")
+            return AgentOutput(summary="Agent timed out after 600s")
+        except RuntimeError as e:
+            logger.error(f"Session error for {subagent_type}: {e}")
+            # Fall back to subprocess mode
+            logger.info("Falling back to subprocess mode")
+            return self._invoke_agent_via_subprocess(subagent_type, prompt)
+        except Exception as e:
+            logger.error(f"Error invoking agent {subagent_type} via session: {e}")
+            return AgentOutput(summary=f"Error: {str(e)}")
+
+    def _invoke_agent_via_subprocess(self, subagent_type: str, prompt: str) -> AgentOutput:
+        """Invoke an agent via a new subprocess (original method)."""
+        import subprocess
+
+        logger.info(f"Using subprocess for agent: {subagent_type}")
 
         try:
             # Call Claude CLI with the sub-agent
@@ -572,6 +680,9 @@ def run_adaptive_workflow(
     project_idea: str,
     interactive: bool = True,
     constraints: Optional[WorkflowConstraints] = None,
+    use_long_running_session: bool = False,
+    stream_log_to_console: bool = False,
+    on_stream_message: Optional[Callable[[Any], None]] = None,
 ) -> Dict:
     """
     Convenience function to run an adaptive workflow.
@@ -581,6 +692,9 @@ def run_adaptive_workflow(
         project_idea: Description of what to build
         interactive: Whether to prompt for user input
         constraints: Optional workflow constraints (scope, full_feature, etc.)
+        use_long_running_session: If True, use single persistent CLI process
+        stream_log_to_console: If True, log all streamed messages to console
+        on_stream_message: Optional callback for stream messages
 
     Returns:
         dict with workflow results
@@ -598,5 +712,11 @@ def run_adaptive_workflow(
             explicit_excludes=constraints.explicit_excludes,
         )
 
-    orchestrator = AdaptiveOrchestrator(project_root, constraints=constraints)
+    orchestrator = AdaptiveOrchestrator(
+        project_root,
+        constraints=constraints,
+        use_long_running_session=use_long_running_session,
+        stream_log_to_console=stream_log_to_console,
+        on_stream_message=on_stream_message,
+    )
     return orchestrator.run_workflow(project_idea)

@@ -61,6 +61,7 @@ jules-agentic-software-builder-for-claude/
 │   │   ├── claude_client.py     # Claude CLI wrapper
 │   │   ├── git_manager.py       # Git operations
 │   │   ├── batched_git.py       # Phase-based git commits
+│   │   ├── long_running_session.py  # Persistent CLI session with streaming
 │   │   └── pr_manager.py        # GitHub PR creation
 │   ├── orchestration/           # Workflow management
 │   │   ├── __init__.py
@@ -291,6 +292,8 @@ Defined in `agentic_builder/orchestration/workflows.py`:
 - **BatchedGitManager** (`integration/batched_git.py`): Phase-based git commits (85% less overhead)
 - **PhaseCommitStrategy** (`integration/batched_git.py`): Maps agents to git commit phases
 - **ClaudeClient** (`integration/claude_client.py`): Wrapper for Claude CLI invocation
+- **LongRunningCLISession** (`integration/long_running_session.py`): Persistent CLI process with streaming
+- **StreamLogger** (`integration/long_running_session.py`): Logs streamed messages to file/console
 
 **Adaptive Orchestrator Data Classes:**
 
@@ -300,6 +303,15 @@ Defined in `agentic_builder/orchestration/workflows.py`:
 - **UserQuestion**: Question requiring user input
 - **AgentDecision**: Decision made by an agent
 - **AgentOutput**: Parsed output from an agent execution
+
+**Long-Running Session Classes** (`integration/long_running_session.py`):
+
+- **LongRunningCLISession**: Maintains persistent Claude CLI process with Popen
+- **StreamLogger**: Logs messages to file and console with timestamps
+- **StreamMessage**: A logged message with direction (incoming/outgoing)
+- **StreamEvent**: Parsed streaming event from Claude CLI JSON output
+- **StreamEventType**: Enum for event types (content_delta, tool_use, message_done, etc.)
+- **MessageDirection**: Enum for message direction (OUTGOING, INCOMING)
 
 ### Performance Optimization (New)
 
@@ -312,11 +324,14 @@ The framework includes optimizations that reduce workflow time from **80+ minute
 | Minimal context injection | ~50 vs ~5000 tokens | `minimal_context.py` |
 | Model tier downgrades | 2.7x model time reduction | `fast_configs.py` |
 | Batched git commits | 85% git overhead reduction | `batched_git.py` |
+| Long-running CLI session | ~2x startup reduction | `long_running_session.py` |
 
 **Task File Store (`.tasks/` directory)**:
 ```
 .tasks/
 ├── manifest.json           # Session state and task registry
+├── logs/                   # Stream logs (when using --long-running-session)
+│   └── stream_*.log        # Real-time message logs
 ├── PM/
 │   ├── output.json         # Summary, next_steps, warnings
 │   └── artifacts.json      # Created file paths
@@ -498,6 +513,13 @@ agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope mvp   
 agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope standard       # Common features
 agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --scope comprehensive  # All features
 
+# Long-running session mode (single CLI process, faster startup)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --long-running-session
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -l
+
+# Stream logging (logs all messages to/from Claude CLI to console)
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -l --stream-log
+
 # List sessions
 agentic-builder list
 
@@ -530,11 +552,20 @@ agentic-builder resume <session-id>
 | `--full-feature` | `-f` | bool | `false` | Include all features (not MVP) |
 | `--interactive/--no-interactive` | - | bool | `true` | Enable/disable user prompts |
 | `--scope` | `-s` | choice | `mvp` | Scope: mvp, standard, comprehensive |
+| `--long-running-session` | `-l` | bool | `false` | Use single persistent CLI process (adaptive only) |
+| `--stream-log` | - | bool | `false` | Log streamed messages to console (requires -l) |
 
 **Orchestrator Types:**
 - `adaptive` - Discovery-driven, spawns only needed agents (default, fastest)
 - `parallel` - Async parallel execution with predefined workflow (5x faster)
 - `sequential` - Original sequential execution (legacy)
+
+**Long-Running Session:**
+When `--long-running-session` is enabled:
+- A single Claude CLI process handles all agent invocations
+- Reduces process startup overhead significantly
+- Stream logs are written to `.tasks/logs/stream_*.log`
+- Add `--stream-log` to also see streamed messages in console
 
 **Scope Levels:**
 - `mvp` - Minimal viable product (PM recommends simpler solutions)
