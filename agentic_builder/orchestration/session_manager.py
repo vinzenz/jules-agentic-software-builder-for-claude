@@ -23,14 +23,21 @@ class SessionManager:
     def _get_path(self, session_id: str) -> Path:
         return self.session_dir / f"{session_id}.json"
 
-    def create_session(self, workflow_name: str) -> SessionData:
+    def create_session(self, workflow_name: str, idea: Optional[str] = None) -> SessionData:
         logger.debug(f"Creating new session for workflow: {workflow_name}")
+        if idea:
+            logger.debug(f"Project idea: {idea[:100]}..." if len(idea) > 100 else f"Project idea: {idea}")
         if not self.session_dir.exists():
             logger.debug(f"Creating session directory: {self.session_dir}")
             self.session_dir.mkdir(parents=True, exist_ok=True)
 
         session_id = f"sess-{uuid.uuid4().hex[:8]}"
-        session = SessionData(id=session_id, workflow_name=workflow_name, status=WorkflowStatus.PENDING)
+        session = SessionData(
+            id=session_id,
+            workflow_name=workflow_name,
+            status=WorkflowStatus.PENDING,
+            idea=idea,
+        )
         logger.debug(f"Created session: {session_id}")
         self.save_session(session)
         return session
