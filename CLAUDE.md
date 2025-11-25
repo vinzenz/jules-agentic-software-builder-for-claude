@@ -30,7 +30,7 @@ jules-agentic-software-builder-for-claude/
 │   ├── architecture.md          # Layer-based agent architecture
 │   └── sub-agent-mappings.md    # Sub-agent delegation mappings
 ├── .claude/                     # Claude Code configuration
-│   ├── agents/                  # Sub-agent definitions (38 specialists)
+│   ├── agents/                  # Sub-agent definitions (48 specialists)
 │   └── skills/                  # Reusable skills (orchestrator)
 ├── agentic_builder/             # Main package
 │   ├── __init__.py
@@ -85,12 +85,15 @@ The system uses a **layer-based architecture** that supports any type of softwar
 ├─────────────────────────────────────────────────────────────┤
 │                  INTEGRATION LAYER                          │
 │  Database │ External APIs │ Network │ Hardware              │
+├─────────────────────────────────────────────────────────────┤
+│                   GRAPHICS LAYER                            │
+│  AI Image Gen │ Background Removal │ Icons │ Assets         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Agent Types
 
-Defined in `agentic_builder/common/types.py`. Total: 35 agent configurations.
+Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
 
 **Universal Agents (always applicable):**
 
@@ -141,6 +144,13 @@ Defined in `agentic_builder/common/types.py`. Total: 35 agent configurations.
 | DEV_INTEGRATION_NETWORK | Protocols, sockets |
 | DEV_INTEGRATION_HARDWARE | Peripherals, drivers |
 
+**Graphics Layer Agents:**
+
+| Agent | Description | Expertise |
+|-------|-------------|-----------|
+| TL_GRAPHICS | Graphics Tech Lead | Brand assets, design direction, visual strategy |
+| DEV_GRAPHICS | Graphics Developer | Image generation, asset optimization, mockups |
+
 **Legacy Aliases (backward compatibility):**
 - `TL_FRONTEND` → `TL_UI_WEB`
 - `DEV_FRONTEND` → `DEV_UI_WEB`
@@ -149,26 +159,40 @@ Defined in `agentic_builder/common/types.py`. Total: 35 agent configurations.
 
 ### Sub-Agents
 
-30 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
+48 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
 
 | Category | Sub-Agents |
 |----------|------------|
-| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, **performance-analyzer** |
-| Design | api-designer*, data-modeler, wireframe-generator, design-system-creator, **protocol-schema-generator** |
+| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, performance-analyzer |
+| Design | api-designer*, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator |
 | Code Generation | component-generator*, controller-generator, model-generator, api-client-generator |
 | Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
 | Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
 | Security | security-scanner, dependency-auditor |
-| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator*, k8s-manifest-generator, **platform-manifest-generator** |
-| Localization | **localization-generator** |
+| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator*, k8s-manifest-generator, platform-manifest-generator |
+| Localization | localization-generator |
 | Architecture | tech-stack-evaluator |
+| Content | content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer |
+| **Graphics** | **image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator** |
 
-*New sub-agents in **bold**, extended sub-agents marked with \**
+*New graphics sub-agents in **bold***
 
 **Extended Sub-Agents:**
 - `component-generator*` - Now supports web (React, Vue, Svelte, Angular), mobile (React Native, Flutter, SwiftUI, Compose), and desktop (Qt, Electron, WPF, GTK)
 - `api-designer*` - Now supports REST, GraphQL, gRPC, WebSocket, CLI commands, and binary protocols
 - `env-config-generator*` - Now supports backend, frontend, mobile, desktop, CLI, and embedded configurations
+
+**Graphics Sub-Agents (NEW):**
+- `image-generator` - Generate images using Google AI Imagen API from text prompts
+- `background-remover` - Remove backgrounds from images using AI segmentation (rembg/U2Net)
+- `icon-generator` - Generate app icons for iOS, Android, web, and desktop platforms
+- `asset-optimizer` - Optimize images for web/mobile with WebP/AVIF conversion and responsive variants
+- `image-editor` - Programmatic image editing (resize, crop, rotate, filters, watermarks)
+- `color-palette-extractor` - Extract color palettes from images for design systems
+- `mockup-generator` - Generate device mockups for screenshots and marketing materials
+- `social-media-asset-generator` - Generate social media graphics for all major platforms
+- `sprite-sheet-generator` - Generate sprite sheets for games with JSON metadata
+- `logo-generator` - Generate logo concepts and brand asset packages
 
 ### Orchestration
 
@@ -285,6 +309,7 @@ agentic-builder resume <session-id>
 | `AMAB_DEBUG` | Set to `1` to enable debug logging |
 | `AMAB_MOCK_CLAUDE_CLI` | Set to `1` to mock Claude CLI responses |
 | `AMAB_MOCK_GH_CLI` | Set to `1` to mock GitHub CLI |
+| `GOOGLE_AI_API_KEY` | Google AI Studio API key for image generation (Imagen) |
 
 ## Key Conventions
 

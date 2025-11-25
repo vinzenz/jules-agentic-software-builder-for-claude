@@ -51,6 +51,10 @@ class AgentType(str, Enum):
     TL_CONTENT = "TL_CONTENT"
     DEV_CONTENT = "DEV_CONTENT"
 
+    # Graphics Layer Agents
+    TL_GRAPHICS = "TL_GRAPHICS"
+    DEV_GRAPHICS = "DEV_GRAPHICS"
+
     # Legacy aliases (backward compatibility)
     TL_FRONTEND = "TL_FRONTEND"  # Alias for TL_UI_WEB
     DEV_FRONTEND = "DEV_FRONTEND"  # Alias for DEV_UI_WEB
