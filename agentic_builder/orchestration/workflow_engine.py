@@ -5,6 +5,7 @@ from typing import Dict
 from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
 from agentic_builder.common.events import EventEmitter
 from agentic_builder.common.types import Artifact, WorkflowStatus
+from agentic_builder.common.utils import get_project_root
 from agentic_builder.orchestration.session_manager import SessionManager
 from agentic_builder.orchestration.workflows import WorkflowMapper
 from agentic_builder.pms.context_serializer import ContextSerializer
@@ -153,11 +154,18 @@ class WorkflowEngine(EventEmitter):
             # Agents write files directly to disk - we just track what was created/modified
             if response.success:
                 created_files = []
+                # Use project root (where .git is) not CWD which may be different
+                root_path = get_project_root().resolve()
+
                 for artifact in response.artifacts:
                     if artifact.type == "file" and artifact.path:
                         # New format: agent already wrote file, we just validate and track
-                        fpath = Path(artifact.path).resolve()
-                        root_path = Path.cwd().resolve()
+                        # Resolve path relative to project root, not CWD
+                        artifact_path = Path(artifact.path)
+                        if artifact_path.is_absolute():
+                            fpath = artifact_path.resolve()
+                        else:
+                            fpath = (root_path / artifact_path).resolve()
 
                         if not fpath.is_relative_to(root_path):
                             logger.error(f"Security: Agent reported file outside repo: {fpath}")
@@ -172,8 +180,11 @@ class WorkflowEngine(EventEmitter):
 
                     elif artifact.type == "file" and artifact.content:
                         # Legacy fallback: write content if provided (backwards compatibility)
-                        fpath = Path(artifact.name).resolve()
-                        root_path = Path.cwd().resolve()
+                        artifact_path = Path(artifact.name)
+                        if artifact_path.is_absolute():
+                            fpath = artifact_path.resolve()
+                        else:
+                            fpath = (root_path / artifact_path).resolve()
 
                         if not fpath.is_relative_to(root_path):
                             logger.error(f"Security: Attempted path traversal write to {fpath}")
