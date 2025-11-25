@@ -240,6 +240,22 @@ AGENT_CONFIGS_MAP = {
     ),
 
     # ========================================
+    # CONTENT LAYER AGENTS
+    # ========================================
+    AgentType.TL_CONTENT: AgentConfig(
+        type=AgentType.TL_CONTENT,
+        model_tier=ModelTier.OPUS,
+        dependencies=[AgentType.PM],  # Content strategy comes from PM requirements
+        layer="content",
+    ),
+    AgentType.DEV_CONTENT: AgentConfig(
+        type=AgentType.DEV_CONTENT,
+        model_tier=ModelTier.SONNET,
+        dependencies=[AgentType.TL_CONTENT],
+        layer="content",
+    ),
+
+    # ========================================
     # LEGACY ALIASES (backward compatibility)
     # ========================================
     AgentType.TL_FRONTEND: AgentConfig(

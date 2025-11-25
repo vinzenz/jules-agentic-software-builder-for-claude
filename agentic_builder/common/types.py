@@ -47,6 +47,10 @@ class AgentType(str, Enum):
     DEV_INTEGRATION_NETWORK = "DEV_INTEGRATION_NETWORK"
     DEV_INTEGRATION_HARDWARE = "DEV_INTEGRATION_HARDWARE"
 
+    # Content Layer Agents
+    TL_CONTENT = "TL_CONTENT"
+    DEV_CONTENT = "DEV_CONTENT"
+
     # Legacy aliases (backward compatibility)
     TL_FRONTEND = "TL_FRONTEND"  # Alias for TL_UI_WEB
     DEV_FRONTEND = "DEV_FRONTEND"  # Alias for DEV_UI_WEB

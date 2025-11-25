@@ -23,6 +23,12 @@ The Agentic Builder uses a **layer-based architecture** that supports any type o
 │  │Services │ │Low-level│ │SDK/Lib  │                                   │
 │  └─────────┘ └─────────┘ └─────────┘                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
+│                       CONTENT LAYER                                     │
+│  Content research, generation, validation, and organization             │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐                       │
+│  │Research │ │Generate │ │Validate │ │Organize │                       │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘                       │
+├─────────────────────────────────────────────────────────────────────────┤
 │                       PLATFORM LAYER                                    │
 │  Platform-specific concerns and abstractions                            │
 │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐          │
@@ -105,6 +111,21 @@ Specialists for external system integration (no Team Lead needed):
 | DEV_INTEGRATION_NETWORK | Networking | TCP/UDP, WebSockets, protocols, sockets |
 | DEV_INTEGRATION_HARDWARE | Hardware | Peripherals, drivers, device interfaces |
 
+### Content Layer Agents
+
+Specialists for content-driven applications (educational, knowledge bases, etc.):
+
+| Agent | Role | Expertise |
+|-------|------|-----------|
+| TL_CONTENT | Content Team Lead | Content strategy, taxonomy design, source planning |
+| DEV_CONTENT | Content Developer | Content research, generation, validation |
+
+Content agents support applications that require:
+- Content research from web and other sources
+- Content generation (articles, questions, lessons, etc.)
+- Content validation (accuracy, safety, appropriateness)
+- Content organization (taxonomies, learning paths)
+
 ## Project Type Examples
 
 ### Web Application
@@ -173,6 +194,29 @@ Agents: PM, ARCHITECT
         TL_CORE_SYSTEMS, DEV_CORE_SYSTEMS   (Core Layer)
         DEV_PLATFORM_EMBEDDED               (Platform Layer)
         DEV_INTEGRATION_HARDWARE            (Integration Layer)
+        TEST, CQR, SR, DOE
+```
+
+### Educational Application
+
+```
+Agents: PM, ARCHITECT, UIUX
+        TL_UI_WEB, DEV_UI_WEB               (UI Layer - or MOBILE)
+        TL_CORE_API, DEV_CORE_API           (Core Layer)
+        TL_CONTENT, DEV_CONTENT             (Content Layer)
+        DEV_INTEGRATION_DATABASE            (Integration Layer)
+        TEST, CQR, SR, DOE
+```
+
+### Knowledge Base / Documentation System
+
+```
+Agents: PM, ARCHITECT, UIUX
+        TL_UI_WEB, DEV_UI_WEB               (UI Layer)
+        TL_CORE_API, DEV_CORE_API           (Core Layer)
+        TL_CONTENT, DEV_CONTENT             (Content Layer)
+        DEV_INTEGRATION_DATABASE            (Integration Layer)
+        DEV_INTEGRATION_API                 (Integration Layer - if indexing external sources)
         TEST, CQR, SR, DOE
 ```
 

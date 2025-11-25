@@ -6,21 +6,22 @@ This document defines which sub-agents are available to each main agent for dele
 
 Main agents can delegate specialized tasks to sub-agents using the orchestrator skill. Sub-agents are defined in `.claude/agents/` and provide focused expertise for specific tasks.
 
-## Sub-Agent Inventory (30 Total)
+## Sub-Agent Inventory (38 Total)
 
 | Category | Sub-Agents |
 |----------|------------|
-| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, **performance-analyzer** |
-| Design | api-designer, data-modeler, wireframe-generator, design-system-creator, **protocol-schema-generator** |
+| Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, performance-analyzer |
+| Design | api-designer, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator |
 | Code Generation | component-generator, controller-generator, model-generator, api-client-generator |
 | Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
 | Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
 | Security | security-scanner, dependency-auditor |
-| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator, k8s-manifest-generator, **platform-manifest-generator** |
-| Localization | **localization-generator** |
+| DevOps | dockerfile-generator, ci-pipeline-generator, env-config-generator, k8s-manifest-generator, platform-manifest-generator |
+| Localization | localization-generator |
 | Architecture | tech-stack-evaluator |
+| **Content** | **content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer** |
 
-*New sub-agents in **bold***
+*New content sub-agents in **bold***
 
 ## Universal Agent Mappings
 
@@ -222,6 +223,27 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | api-designer | Design hardware abstraction API | Yes |
 | code-documentation-generator | Document hardware interfaces | After impl |
 | protocol-schema-generator | Generate communication protocol schemas | Yes |
+
+## Content Layer Agent Mappings
+
+### TL_CONTENT
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| content-researcher | Research topics and gather information | Yes |
+| content-sourcer | Find and validate information sources | Yes |
+| content-taxonomy-designer | Design content classification systems | After research |
+| content-schema-designer | Design data models for content storage | After taxonomy |
+
+### DEV_CONTENT
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| content-researcher | Research specific topics in depth | Yes |
+| content-generator | Generate articles, explanations, lessons | After research |
+| assessment-generator | Generate questions, tests, quizzes | After research |
+| content-validator | Validate accuracy, safety, appropriateness | After generation |
+| learning-path-designer | Design learning sequences and progressions | After validation |
 
 ## Parallelization Rules
 
