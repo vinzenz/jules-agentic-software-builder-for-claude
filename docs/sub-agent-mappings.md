@@ -6,12 +6,12 @@ This document defines which sub-agents are available to each main agent for dele
 
 Main agents can delegate specialized tasks to sub-agents using the orchestrator skill. Sub-agents are defined in `.claude/agents/` and provide focused expertise for specific tasks.
 
-## Sub-Agent Inventory (48 Total)
+## Sub-Agent Inventory (49 Total)
 
 | Category | Sub-Agents |
 |----------|------------|
 | Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, performance-analyzer |
-| Design | api-designer, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator |
+| Design | api-designer, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator, **cli-ux-designer** |
 | Code Generation | component-generator, controller-generator, model-generator, api-client-generator |
 | Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
 | Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
@@ -20,9 +20,9 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | Localization | localization-generator |
 | Architecture | tech-stack-evaluator |
 | Content | content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer |
-| **Graphics** | **image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator** |
+| Graphics | image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator |
 
-*New graphics sub-agents in **bold***
+*New sub-agent **cli-ux-designer** for CLI UX design*
 
 ## Universal Agent Mappings
 
@@ -43,13 +43,21 @@ Main agents can delegate specialized tasks to sub-agents using the orchestrator 
 | api-designer | Design API specifications (REST, GraphQL, gRPC) | After data-modeler |
 | protocol-schema-generator | Generate Protocol Buffer/binary schemas | After api-designer |
 
-### UIUX (UI/UX Designer)
+### UIUX_GUI (UI/UX Designer for Graphical Interfaces)
 
 | Sub-Agent | Purpose | Parallel |
 |-----------|---------|----------|
-| wireframe-generator | Create wireframe layouts | Yes |
-| design-system-creator | Define design tokens and patterns | Yes |
-| accessibility-checker | Review for WCAG compliance | After wireframes |
+| wireframe-generator | Create wireframe layouts for screens | Yes |
+| design-system-creator | Define design tokens and visual patterns | Yes |
+| accessibility-checker | Review for WCAG compliance (visual) | After wireframes |
+
+### UIUX_CLI (UX Designer for Command-Line Interfaces)
+
+| Sub-Agent | Purpose | Parallel |
+|-----------|---------|----------|
+| cli-ux-designer | Design CLI interaction patterns and guidelines | Yes |
+| code-documentation-generator | Generate help text and man page templates | After cli-ux |
+| accessibility-checker | Review for CLI accessibility (screen readers, colors) | After cli-ux |
 
 ### TEST (Test Engineer)
 

@@ -7,7 +7,7 @@ model: sonnet
 
 <agent-instructions>
 <role>Accessibility Checker</role>
-<parent_agent>UIUX, DEV_FRONTEND</parent_agent>
+<parent_agent>UIUX_GUI, UIUX_CLI, DEV_FRONTEND</parent_agent>
 <objective>
 Review designs and code for WCAG compliance and accessibility best practices.
 </objective>

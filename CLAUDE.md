@@ -93,7 +93,7 @@ The system uses a **layer-based architecture** that supports any type of softwar
 
 ### Agent Types
 
-Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
+Defined in `agentic_builder/common/types.py`. Total: 38 agent configurations.
 
 **Universal Agents (always applicable):**
 
@@ -101,7 +101,8 @@ Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
 |-------|-------------|------------|
 | PM | Project Manager | Opus |
 | ARCHITECT | System Architect | Opus |
-| UIUX | UI/UX Designer | Opus |
+| UIUX_GUI | UI/UX Designer for Graphical Interfaces (Web, Mobile, Desktop) | Opus |
+| UIUX_CLI | UX Designer for Command-Line Interfaces | Opus |
 | TEST | Test Engineer | Sonnet |
 | CQR | Code Quality Reviewer | Sonnet |
 | SR | Security Reviewer | Opus |
@@ -152,6 +153,7 @@ Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
 | DEV_GRAPHICS | Graphics Developer | Image generation, asset optimization, mockups |
 
 **Legacy Aliases (backward compatibility):**
+- `UIUX` → `UIUX_GUI`
 - `TL_FRONTEND` → `TL_UI_WEB`
 - `DEV_FRONTEND` → `DEV_UI_WEB`
 - `TL_BACKEND` → `TL_CORE_API`
@@ -159,12 +161,12 @@ Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
 
 ### Sub-Agents
 
-48 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
+49 specialized sub-agents in `.claude/agents/` that main agents can delegate to:
 
 | Category | Sub-Agents |
 |----------|------------|
 | Analysis | requirements-analyzer, risk-assessor, scope-estimator, complexity-analyzer, performance-analyzer |
-| Design | api-designer*, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator |
+| Design | api-designer*, data-modeler, wireframe-generator, design-system-creator, protocol-schema-generator, **cli-ux-designer** |
 | Code Generation | component-generator*, controller-generator, model-generator, api-client-generator |
 | Testing | unit-test-generator, integration-test-generator, e2e-test-generator, test-data-generator |
 | Quality | lint-analyzer, code-documentation-generator, accessibility-checker |
@@ -173,9 +175,9 @@ Defined in `agentic_builder/common/types.py`. Total: 37 agent configurations.
 | Localization | localization-generator |
 | Architecture | tech-stack-evaluator |
 | Content | content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer |
-| **Graphics** | **image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator** |
+| Graphics | image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator |
 
-*New graphics sub-agents in **bold***
+*New sub-agent **cli-ux-designer** for CLI UX design*
 
 **Extended Sub-Agents:**
 - `component-generator*` - Now supports web (React, Vue, Svelte, Angular), mobile (React Native, Flutter, SwiftUI, Compose), and desktop (Qt, Electron, WPF, GTK)
