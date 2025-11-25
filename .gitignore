@@ -1,4 +1,5 @@
 __pycache__/
+todoz/
 *.pyc
 .sessions/
 .tasks/
