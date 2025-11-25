@@ -289,8 +289,12 @@ ruff check --fix .
 ### CLI Usage
 
 ```bash
-# Start a workflow with a project idea
+# Start a workflow with a project idea (outputs to current directory)
 agentic-builder run FULL_APP_GENERATION --idea "Build a todo app with React and FastAPI"
+
+# Specify a custom output directory for the project
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" --output-dir ./my-project
+agentic-builder run FULL_APP_GENERATION --idea "Build a todo app" -o ./my-project
 
 # For a CLI tool
 agentic-builder run FULL_APP_GENERATION --idea "Build a CLI file encryption tool in Rust"

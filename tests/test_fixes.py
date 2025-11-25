@@ -1,11 +1,10 @@
 
-import os
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-from agentic_builder.orchestration.workflow_engine import WorkflowEngine
-from agentic_builder.common.types import Artifact, AgentOutput, AgentType, ModelTier
+
+from agentic_builder.common.types import AgentOutput, AgentType, Artifact, ModelTier
 from agentic_builder.integration.claude_client import ClaudeClient
+from agentic_builder.orchestration.workflow_engine import WorkflowEngine
 
 # --- Tests for Security Fixes ---
 
@@ -21,6 +20,8 @@ def test_workflow_engine_prevents_path_traversal():
     session.completed_tasks = []
     session_manager.load_session.return_value = session
     session_manager.session_dir = Path("/tmp")
+    # Mock the output_dir property to return the temp directory
+    type(session_manager).output_dir = property(lambda self: Path("/tmp"))
 
     pms = MagicMock()
     git = MagicMock()
@@ -58,9 +59,11 @@ def test_workflow_engine_prevents_path_traversal():
         mock_config.return_value.dependencies = []
         mock_config.return_value.model_tier = ModelTier.HAIKU
 
-        with patch("agentic_builder.orchestration.workflow_engine.get_agent_prompt"):
-             with patch("agentic_builder.orchestration.workflow_engine.ContextSerializer"):
+        # Mock WorkflowMapper to return just PM agent
+        with patch("agentic_builder.orchestration.workflow_engine.WorkflowMapper") as mock_mapper:
+            mock_mapper.get_execution_order.return_value = [AgentType.PM]
 
+            with patch("agentic_builder.orchestration.workflow_engine.ContextSerializer"):
                 # Mock claude to return our malicious response
                 claude.call_agent.return_value = response
 
@@ -107,6 +110,6 @@ def test_claude_client_uses_stdin():
             # Check that command uses "-" for input file if applicable, or just reads stdin
             cmd = args[0]
             assert "-" in cmd
-            assert "-s" in cmd
+            assert "--system-prompt" in cmd
             assert "System Prompt" in cmd
             assert "-p" in cmd

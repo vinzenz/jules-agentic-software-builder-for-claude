@@ -1,13 +1,19 @@
 import subprocess
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 from agentic_builder.common.utils import get_project_root
 
 
 class GitManager:
-    def __init__(self):
-        # Always operate in the project root directory
-        self._cwd = get_project_root()
+    def __init__(self, output_dir: Optional[Path] = None):
+        # Use provided output_dir or fall back to get_project_root()
+        self._cwd = output_dir.resolve() if output_dir else get_project_root()
+
+    @property
+    def output_dir(self) -> Path:
+        """Return the project root directory for git operations."""
+        return self._cwd
 
     def create_branch(self, branch_name: str):
         self._run(["git", "checkout", "-b", branch_name])

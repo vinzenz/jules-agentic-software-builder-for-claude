@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from agentic_builder.common.logging_config import get_logger, log_separator
 from agentic_builder.common.types import Task
@@ -30,7 +30,8 @@ class ContextSerializer:
         logger.debug(f"Agent Type: {task.agent_type.value}")
         logger.debug(f"Description: {task.description}")
         if project_idea:
-            logger.debug(f"Project Idea: {project_idea[:100]}..." if len(project_idea) > 100 else f"Project Idea: {project_idea}")
+            idea_preview = f"{project_idea[:100]}..." if len(project_idea) > 100 else project_idea
+            logger.debug(f"Project Idea: {idea_preview}")
 
         if dependency_tasks is None:
             dependency_tasks = {}

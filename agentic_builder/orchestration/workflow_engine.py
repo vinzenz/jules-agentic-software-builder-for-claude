@@ -3,11 +3,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
+from agentic_builder.agents.configs import get_agent_config
 from agentic_builder.common.events import EventEmitter
 from agentic_builder.common.logging_config import get_logger, log_separator, truncate_for_log
 from agentic_builder.common.types import WorkflowStatus
-from agentic_builder.common.utils import get_project_root
 from agentic_builder.orchestration.session_manager import SessionManager
 from agentic_builder.orchestration.workflows import WorkflowMapper
 from agentic_builder.pms.context_serializer import ContextSerializer
@@ -116,7 +115,7 @@ class WorkflowEngine(EventEmitter):
         log_separator(debug_logger, "CREATING CLAUDE.md")
         debug_logger.debug(f"Creating CLAUDE.md for session {session_id}")
 
-        project_root = get_project_root()
+        project_root = self.session_manager.output_dir
         claude_md_path = project_root / "CLAUDE.md"
 
         # Get the agent execution order for this workflow
@@ -142,7 +141,7 @@ class WorkflowEngine(EventEmitter):
 
         # Commit the CLAUDE.md file
         try:
-            self.git.commit_files([str(claude_md_path)], f"[INIT] Create CLAUDE.md with project idea")
+            self.git.commit_files([str(claude_md_path)], "[INIT] Create CLAUDE.md with project idea")
             debug_logger.debug("CLAUDE.md committed to git")
         except Exception as e:
             debug_logger.warning(f"Failed to commit CLAUDE.md: {e}")
@@ -154,7 +153,8 @@ class WorkflowEngine(EventEmitter):
         session = self.session_manager.load_session(session_id)
         debug_logger.debug(f"Loaded session: workflow={session.workflow_name}, status={session.status}")
         if session.idea:
-            debug_logger.debug(f"Project idea: {session.idea[:100]}..." if len(session.idea) > 100 else f"Project idea: {session.idea}")
+            idea_preview = f"{session.idea[:100]}..." if len(session.idea) > 100 else session.idea
+            debug_logger.debug(f"Project idea: {idea_preview}")
 
         # Setup logging
         log_file = self.session_manager.session_dir / f"{session_id}.log"
@@ -174,7 +174,7 @@ class WorkflowEngine(EventEmitter):
         logger.addHandler(file_handler)
 
         logger.info(f"Starting workflow loop for {session_id}")
-        debug_logger.debug(f"Session logger configured, starting workflow loop")
+        debug_logger.debug("Session logger configured, starting workflow loop")
 
         # Determine execution order based on workflow name
         try:
@@ -184,7 +184,7 @@ class WorkflowEngine(EventEmitter):
             debug_logger.warning(f"Failed to get execution order for {session.workflow_name}: {e}")
             # Fallback to full generation if mapping fails or handle error
             execution_order = WorkflowMapper.get_execution_order("FULL_APP_GENERATION")
-            debug_logger.debug(f"Falling back to FULL_APP_GENERATION execution order")
+            debug_logger.debug("Falling back to FULL_APP_GENERATION execution order")
 
         # Resume logic: skip completed agents
         completed_agents = set()
@@ -211,7 +211,8 @@ class WorkflowEngine(EventEmitter):
 
             log_separator(debug_logger, f"EXECUTING AGENT: {agent_type.value}")
             config = get_agent_config(agent_type)
-            debug_logger.debug(f"Agent config: model_tier={config.model_tier}, dependencies={[d.value for d in config.dependencies]}")
+            dep_names = [d.value for d in config.dependencies]
+            debug_logger.debug(f"Agent config: model_tier={config.model_tier}, dependencies={dep_names}")
 
             # 1. Create PMS Task
             # Resolve dependencies task IDs
@@ -235,13 +236,15 @@ class WorkflowEngine(EventEmitter):
 
             # 2. Serialize Context
             # Gather outputs from dependency tasks (summary, next_steps, warnings, file paths)
-            debug_logger.debug(f"Gathering dependency task outputs...")
+            debug_logger.debug("Gathering dependency task outputs...")
             dep_tasks = {}
             for dep_id in task.dependencies:
                 dep_task = self.pms.get_task(dep_id)
                 if dep_task:
                     dep_tasks[dep_id] = dep_task
-                    debug_logger.debug(f"  Dep task {dep_id}: agent={dep_task.agent_type.value}, files={len(dep_task.context_files)}")
+                    agent_name = dep_task.agent_type.value
+                    file_count = len(dep_task.context_files)
+                    debug_logger.debug(f"  Dep task {dep_id}: agent={agent_name}, files={file_count}")
 
             # Serialize context including full agent outputs from dependencies
             # Pass the project idea so agents know what they're building
@@ -264,8 +267,8 @@ class WorkflowEngine(EventEmitter):
             if response.success:
                 debug_logger.debug(f"Processing successful response for agent {agent_type.value}")
                 created_files = []
-                # Use project root (where .git is) not CWD which may be different
-                root_path = get_project_root().resolve()
+                # Use output_dir as project root for all file operations
+                root_path = self.session_manager.output_dir.resolve()
                 debug_logger.debug(f"Project root path: {root_path}")
 
                 debug_logger.debug(f"Processing {len(response.artifacts)} artifacts...")
@@ -337,14 +340,14 @@ class WorkflowEngine(EventEmitter):
                 agent_task_map[agent_type] = task.id
 
                 self.session_manager.save_session(session)
-                debug_logger.debug(f"Session saved")
+                debug_logger.debug("Session saved")
 
                 # Commit
                 if created_files:
                     commit_msg = f"[{agent_type.value}] {response.summary[:50]}"
                     debug_logger.debug(f"Committing files with message: {commit_msg}")
                     self.git.commit_files(created_files, commit_msg)
-                    debug_logger.debug(f"Git commit completed")
+                    debug_logger.debug("Git commit completed")
 
                 self.emit("agent_completed", {"agent": agent_type, "summary": response.summary})
                 logger.info(f"Agent {agent_type} completed.")
@@ -371,7 +374,7 @@ class WorkflowEngine(EventEmitter):
                 title=pr_title,
                 body="Generated by Agentic Mobile App Builder",
             )
-            debug_logger.debug(f"PR created successfully")
+            debug_logger.debug("PR created successfully")
             self.emit("workflow_completed", session.id)
             debug_logger.debug(f"Workflow {session_id} completed event emitted")
         else:

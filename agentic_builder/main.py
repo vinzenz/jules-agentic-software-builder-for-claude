@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Optional
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -41,12 +44,22 @@ def main_callback(
         console.print("[yellow]Debug logging enabled[/yellow]")
 
 
-def get_engine():
+def get_engine(output_dir: Optional[Path] = None):
+    """
+    Create a WorkflowEngine with all required dependencies.
+
+    Args:
+        output_dir: Optional project root directory for all file operations.
+                   Defaults to current working directory if not specified.
+    """
+    # Default to CWD if no output_dir specified
+    resolved_output_dir = output_dir.resolve() if output_dir else Path.cwd()
+
     return WorkflowEngine(
-        session_manager=SessionManager(),
-        pms_manager=TaskManager(),
-        git_manager=GitManager(),
-        claude_client=ClaudeClient(),
+        session_manager=SessionManager(output_dir=resolved_output_dir),
+        pms_manager=TaskManager(output_dir=resolved_output_dir),
+        git_manager=GitManager(output_dir=resolved_output_dir),
+        claude_client=ClaudeClient(output_dir=resolved_output_dir),
         pr_manager=PRManager(),
     )
 
@@ -60,6 +73,16 @@ def run(
         "-i",
         help="Project idea or description. This will be passed to agents and written to CLAUDE.md",
     ),
+    output_dir: Optional[Path] = typer.Option(
+        None,
+        "--output-dir",
+        "-o",
+        help="Project root directory for all file operations. Defaults to current working directory.",
+        exists=False,  # Don't require directory to exist - we'll create it if needed
+        file_okay=False,
+        dir_okay=True,
+        resolve_path=True,
+    ),
 ):
     """
     Start a new workflow.
@@ -67,12 +90,22 @@ def run(
     Examples:
         agentic-builder run FULL_APP_GENERATION --idea "Build a todo app with React and FastAPI"
         agentic-builder run FEATURE_ADDITION -i "Add user authentication with OAuth2"
+        agentic-builder run FULL_APP_GENERATION --idea "Build a CLI tool" -o ./my-project
     """
+    # Use provided output_dir or default to CWD
+    resolved_output_dir = output_dir if output_dir else Path.cwd()
+
     console.print(f"[bold green]Starting workflow:[/bold green] {workflow}")
     if idea:
         console.print(f"[bold blue]Project Idea:[/bold blue] {idea}")
+    console.print(f"[bold cyan]Output Directory:[/bold cyan] {resolved_output_dir}")
 
-    engine = get_engine()
+    # Create output directory if it doesn't exist
+    if not resolved_output_dir.exists():
+        console.print(f"[yellow]Creating output directory:[/yellow] {resolved_output_dir}")
+        resolved_output_dir.mkdir(parents=True, exist_ok=True)
+
+    engine = get_engine(output_dir=resolved_output_dir)
 
     # Event listeners for CLI feedback
     def on_stage_start(data):

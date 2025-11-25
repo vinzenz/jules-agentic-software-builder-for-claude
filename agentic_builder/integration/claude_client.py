@@ -3,13 +3,13 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
-from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
+from agentic_builder.agents.configs import get_agent_prompt
 from agentic_builder.agents.response_parser import ResponseParser
 from agentic_builder.common.logging_config import get_logger, log_separator, truncate_for_log
 from agentic_builder.common.types import AgentOutput, AgentType, ModelTier
 from agentic_builder.common.utils import get_project_root
-
 
 # Module logger
 logger = get_logger(__name__)
@@ -25,9 +25,16 @@ DEFAULT_PERMISSION_DENIES = [
 
 
 class ClaudeClient:
-    def __init__(self):
+    def __init__(self, output_dir: Optional[Path] = None):
         self._local_claude_dir = None
-        logger.debug("ClaudeClient initialized")
+        # Use provided output_dir or fall back to get_project_root()
+        self._output_dir = output_dir.resolve() if output_dir else get_project_root()
+        logger.debug(f"ClaudeClient initialized with output_dir: {self._output_dir}")
+
+    @property
+    def output_dir(self) -> Path:
+        """Return the project root directory for agent operations."""
+        return self._output_dir
 
     def _setup_local_claude_config(self, project_root: Path) -> Path:
         """
@@ -110,16 +117,22 @@ class ClaudeClient:
         # - : Stdin (Context)
 
         # Use stdin for user input to avoid ARG_MAX limits with large context
-        cmd = ["claude", "--model", model.value, "--system-prompt", system_prompt, "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
+        cmd = [
+            "claude", "--model", model.value, "--system-prompt", system_prompt,
+            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+        ]
 
         log_separator(logger, "CLI COMMAND", char="-")
         # Log command without full system prompt (it's logged above)
-        cmd_display = ["claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]", "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
+        cmd_display = [
+            "claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]",
+            "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"
+        ]
         logger.debug(f"Command: {' '.join(cmd_display)}")
 
         # Run Claude CLI in the project root directory so agents write files
         # to the correct location when using relative paths
-        project_root = get_project_root()
+        project_root = self._output_dir
         logger.debug(f"Working Directory: {project_root}")
 
         # Set up local .claude config directory with credentials and security settings

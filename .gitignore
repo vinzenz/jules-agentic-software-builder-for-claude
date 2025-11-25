@@ -7,3 +7,7 @@ todoz/
 build/
 dist/
 .pytest_cache/
+
+# Local Claude CLI configuration (generated, may contain credentials)
+.claude/settings.json
+.claude/.credentials.json
