@@ -237,16 +237,154 @@ class AdaptiveOrchestrator:
             return None
 
     def _invoke_agent(self, subagent_type: str, context: Dict) -> AgentOutput:
-        """Invoke an agent and parse its output."""
-        # This would normally call Claude CLI
-        # For now, read the output from the tasks directory
+        """Invoke an agent via Claude CLI and parse its output."""
+        import subprocess
 
-        # Placeholder - in real implementation:
-        # result = subprocess.run(["claude", "--skill", subagent_type, ...])
-        # return self._parse_agent_output(result.stdout)
+        # Build the prompt for the agent
+        manifest = self._load_manifest()
+        prompt = f"""Execute your role for this project.
 
-        # For now, return a minimal output
-        return AgentOutput(summary=f"Completed {subagent_type}")
+Project Idea: {manifest.get("project_idea", "See manifest")}
+Constraints: {json.dumps(manifest.get("constraints", {}))}
+
+Read .tasks/manifest.json for full context.
+Write your output to the appropriate .tasks/{subagent_type.upper().replace("-", "_")}/ directory.
+
+When done, output your results in JSON format with these fields:
+- summary: Brief description of what you did
+- spawn_next: Array of {{agent, reason, priority}} for agents that should run next
+- skip_agents: Array of {{agent, reason}} for agents that should be skipped
+- ask_user: Array of questions if user input needed (only for LOW confidence decisions)
+- artifacts: Array of {{path, action}} for files created/modified
+"""
+
+        # Add any context from the spawn request
+        if context:
+            prompt += f"\nAdditional context: {json.dumps(context)}"
+
+        logger.info(f"Invoking agent: {subagent_type}")
+        logger.debug(f"Prompt: {prompt[:500]}...")
+
+        try:
+            # Call Claude CLI with the sub-agent
+            result = subprocess.run(
+                [
+                    "claude",
+                    "-p",
+                    prompt,
+                    "--allowedTools",
+                    "Task,Read,Write,Edit,Glob,Grep,Bash",
+                    "--dangerously-skip-permissions",
+                ],
+                cwd=str(self.project_root),
+                capture_output=True,
+                text=True,
+                timeout=600,  # 10 minute timeout per agent
+            )
+
+            if result.returncode != 0:
+                logger.error(f"Agent {subagent_type} failed: {result.stderr}")
+                return AgentOutput(summary=f"Failed: {result.stderr[:200]}")
+
+            # Parse the output
+            return self._parse_agent_output(subagent_type, result.stdout)
+
+        except subprocess.TimeoutExpired:
+            logger.error(f"Agent {subagent_type} timed out")
+            return AgentOutput(summary="Agent timed out after 600s")
+        except Exception as e:
+            logger.error(f"Error invoking agent {subagent_type}: {e}")
+            return AgentOutput(summary=f"Error: {str(e)}")
+
+    def _parse_agent_output(self, agent_name: str, raw_output: str) -> AgentOutput:
+        """Parse agent output from Claude CLI response."""
+        import re
+
+        # Try to extract JSON from the output
+        json_match = re.search(r'\{[\s\S]*"summary"[\s\S]*\}', raw_output)
+
+        if json_match:
+            try:
+                data = json.loads(json_match.group())
+                return AgentOutput(
+                    summary=data.get("summary", "Completed"),
+                    artifacts=[
+                        {"path": a.get("path", a), "action": a.get("action", "created")}
+                        for a in data.get("artifacts", [])
+                    ],
+                    spawn_next=[
+                        SpawnRequest(
+                            agent=s.get("agent", s),
+                            reason=s.get("reason", "Requested by agent"),
+                            priority=s.get("priority", "required"),
+                        )
+                        for s in data.get("spawn_next", [])
+                    ],
+                    skip_agents=[
+                        SkipDecision(
+                            agent=s.get("agent", s),
+                            reason=s.get("reason", "Skipped by agent"),
+                        )
+                        for s in data.get("skip_agents", [])
+                    ],
+                    ask_user=[
+                        UserQuestion(
+                            id=q.get("id", f"q_{hash(q.get('question', ''))}"),
+                            question=q.get("question", ""),
+                            confidence=ConfidenceLevel(q.get("confidence", "low")),
+                            context=q.get("context", ""),
+                            options=q.get("options", []),
+                            recommendation=q.get("recommendation", ""),
+                            reason=q.get("reason", ""),
+                            affects=q.get("affects", []),
+                        )
+                        for q in data.get("ask_user", [])
+                    ],
+                    warnings=data.get("warnings", []),
+                )
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse JSON output: {e}")
+
+        # Also try to read from task output file
+        agent_dir = agent_name.upper().replace("-", "_")
+        output_file = self.tasks_dir / agent_dir / "output.json"
+        if output_file.exists():
+            try:
+                data = json.loads(output_file.read_text())
+                return AgentOutput(
+                    summary=data.get("summary", "Completed"),
+                    spawn_next=[
+                        SpawnRequest(
+                            agent=s.get("agent", s),
+                            reason=s.get("reason", "Requested"),
+                            priority=s.get("priority", "required"),
+                        )
+                        for s in data.get("spawn_next", [])
+                    ],
+                    skip_agents=[
+                        SkipDecision(agent=s.get("agent", s), reason=s.get("reason", ""))
+                        for s in data.get("skip_agents", [])
+                    ],
+                    ask_user=[
+                        UserQuestion(
+                            id=q.get("id", ""),
+                            question=q.get("question", ""),
+                            confidence=ConfidenceLevel(q.get("confidence", "low")),
+                            context=q.get("context", ""),
+                            options=q.get("options", []),
+                            recommendation=q.get("recommendation", ""),
+                            reason=q.get("reason", ""),
+                            affects=q.get("affects", []),
+                        )
+                        for q in data.get("ask_user", [])
+                    ],
+                )
+            except Exception as e:
+                logger.warning(f"Failed to read task output file: {e}")
+
+        # Fallback: return basic output with summary extracted from raw output
+        summary = raw_output[:500] if raw_output else "Completed"
+        return AgentOutput(summary=summary)
 
     def _process_agent_output(self, agent_name: str, output: AgentOutput) -> List[SpawnRequest]:
         """Process agent output: handle questions, skips, and spawns."""
