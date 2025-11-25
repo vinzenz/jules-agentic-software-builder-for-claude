@@ -102,7 +102,7 @@ Defined in `agentic_builder/common/types.py`. Total: 38 agent configurations.
 | PM | Project Manager | Opus |
 | ARCHITECT | System Architect | Opus |
 | UIUX_GUI | UI/UX Designer for Graphical Interfaces (Web, Mobile, Desktop) | Opus |
-| UIUX_CLI | UX Designer for Command-Line Interfaces | Opus |
+| UIUX_CLI | UX Designer for Command-Line Interfaces | Sonnet |
 | TEST | Test Engineer | Sonnet |
 | CQR | Code Quality Reviewer | Sonnet |
 | SR | Security Reviewer | Opus |
@@ -176,6 +176,16 @@ Defined in `agentic_builder/common/types.py`. Total: 38 agent configurations.
 | Architecture | tech-stack-evaluator |
 | Content | content-researcher, content-sourcer, content-taxonomy-designer, content-schema-designer, content-generator, assessment-generator, content-validator, learning-path-designer |
 | Graphics | image-generator, background-remover, icon-generator, asset-optimizer, image-editor, color-palette-extractor, mockup-generator, social-media-asset-generator, sprite-sheet-generator, logo-generator |
+
+**Sub-Agent Model Tiers:**
+
+Sub-agents use tiered models based on task complexity:
+
+| Model | Count | Usage | Sub-Agents |
+|-------|-------|-------|------------|
+| Opus | 2 | Deep reasoning, security-critical | security-scanner, risk-assessor |
+| Sonnet | 25 | Analysis, design, testing | api-designer, data-modeler, wireframe-generator, design-system-creator, cli-ux-designer, unit-test-generator, integration-test-generator, e2e-test-generator, lint-analyzer, accessibility-checker, dependency-auditor, complexity-analyzer, performance-analyzer, requirements-analyzer, scope-estimator, tech-stack-evaluator, image-generator, content-* agents, learning-path-designer |
+| Haiku | 22 | Templated code/config generation | component-generator, controller-generator, model-generator, api-client-generator, protocol-schema-generator, code-documentation-generator, test-data-generator, dockerfile-generator, ci-pipeline-generator, k8s-manifest-generator, env-config-generator, platform-manifest-generator, localization-generator, icon-generator, asset-optimizer, image-editor, color-palette-extractor, sprite-sheet-generator, background-remover, mockup-generator, social-media-asset-generator, logo-generator |
 
 *New sub-agent **cli-ux-designer** for CLI UX design*
 

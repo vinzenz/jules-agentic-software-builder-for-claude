@@ -2,7 +2,7 @@
 name: color-palette-extractor
 description: Extract color palettes from images for design systems. Generates dominant colors, color harmonies, and exports to various formats (CSS, JSON, design tokens).
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

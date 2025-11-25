@@ -2,7 +2,7 @@
 name: platform-manifest-generator
 description: Generate platform-specific manifest and configuration files for iOS, Android, Windows, macOS, Linux, and embedded platforms. Creates Info.plist, AndroidManifest.xml, app manifests, entitlements, and build configurations.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

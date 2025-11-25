@@ -51,7 +51,7 @@ AGENT_CONFIGS_MAP = {
     ),
     AgentType.UIUX_CLI: AgentConfig(
         type=AgentType.UIUX_CLI,
-        model_tier=ModelTier.OPUS,
+        model_tier=ModelTier.SONNET,  # CLI UX is more constrained than GUI
         dependencies=[AgentType.PM],
         layer="universal",
     ),

@@ -2,7 +2,7 @@
 name: k8s-manifest-generator
 description: Generate Kubernetes manifests for application deployment, scaling, and operations. Creates Deployments, Services, Ingress, ConfigMaps, HPA, and Kustomize overlays for different environments.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

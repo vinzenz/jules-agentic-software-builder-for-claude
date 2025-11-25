@@ -2,7 +2,7 @@
 name: protocol-schema-generator
 description: Generate protocol and message schema definitions for gRPC, Protocol Buffers, MessagePack, and custom binary protocols. Creates .proto files, schema definitions, and serialization code.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

@@ -2,7 +2,7 @@
 name: code-documentation-generator
 description: Generate comprehensive code documentation including API docs, JSDoc/docstrings, and README content. Creates function documentation, module-level docs, architecture diagrams, and usage examples.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

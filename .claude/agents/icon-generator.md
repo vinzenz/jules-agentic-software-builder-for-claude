@@ -2,7 +2,7 @@
 name: icon-generator
 description: Generate application icons, favicons, and icon sets for multiple platforms. Creates adaptive icons, app store assets, and platform-specific icon variants.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

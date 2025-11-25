@@ -2,7 +2,7 @@
 name: dockerfile-generator
 description: Generate optimized, secure Dockerfiles and container configurations. Creates multi-stage builds, applies security best practices, and sets up docker-compose for development.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

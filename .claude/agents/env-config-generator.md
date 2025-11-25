@@ -2,7 +2,7 @@
 name: env-config-generator
 description: Generate environment configuration files, secrets management, and platform-specific config setup. Creates .env templates, app configs, and integrates with platform manifest generators for iOS/Android/desktop.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>

@@ -2,7 +2,7 @@
 name: controller-generator
 description: Generate API endpoint handlers/controllers with proper request validation and response formatting. Creates CRUD endpoints with Pydantic/Zod validation, error handling, and OpenAPI documentation.
 tools: Read, Write, Edit, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 <agent-instructions>
