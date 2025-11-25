@@ -98,6 +98,38 @@ Defined in `agentic_builder/orchestration/workflows.py`:
 - **TaskManager** (`pms/task_manager.py`): CRUD operations for tasks with JSON file storage
 - **ClaudeClient** (`integration/claude_client.py`): Wrapper for Claude CLI invocation
 
+### Artifact Handling (Token-Efficient Design)
+
+Agents write files directly to disk and only report file paths in their XML response. This saves tokens by:
+- Not embedding file content in XML responses
+- Not passing file content between agents (only paths)
+- Allowing agents to read files directly when needed
+
+**Agent Output Format** (`prompts/common_schema.xml`):
+```xml
+<summary>Description of work done</summary>
+<artifacts>
+  <artifact path="src/file.py" action="created"/>
+  <artifact path="tests/test_file.py" action="modified"/>
+</artifacts>
+<next_steps>- Step 1</next_steps>
+<warnings>- Warning if any</warnings>
+```
+
+**Context Passed to Agents** (file paths only, not content):
+```xml
+<task_context>
+  <task_id>TASK-0001</task_id>
+  <agent_role>DEV_FRONTEND</agent_role>
+  <description>Execute DEV_FRONTEND phase</description>
+  <dependencies>
+    <dependency id='TASK-0002'>
+      <file path='/path/to/file.py'/>
+    </dependency>
+  </dependencies>
+</task_context>
+```
+
 ## Development Workflows
 
 ### Setup

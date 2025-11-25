@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from agentic_builder.common.types import AgentOutput, Artifact
 
@@ -16,15 +17,36 @@ class ResponseParser:
             # If no summary tag, treat whole text as summary (fallback)
             summary = text.strip()
 
-        # Extract artifacts
+        # Extract artifacts - new format: <artifact path="..." action="created|modified"/>
         artifacts = []
-        # Regex for artifacts: <artifact name="..." type="...">content</artifact>
-        artifact_pattern = re.compile(
-            r'<artifact\s+name=["\'](.*?)["\']\s+type=["\'](.*?)["\']\s*>(.*?)</artifact>', re.DOTALL
+
+        # New path-based format (self-closing or with empty content)
+        path_pattern = re.compile(
+            r'<artifact\s+path=["\'](.*?)["\']\s*(?:action=["\'](\w+)["\'])?\s*/?>',
+            re.DOTALL
         )
-        for match in artifact_pattern.finditer(text):
-            name, type_, content = match.groups()
-            artifacts.append(Artifact(name=name, type=type_, content=content.strip()))
+        for match in path_pattern.finditer(text):
+            file_path = match.group(1)
+            action = match.group(2) if match.group(2) else "created"
+            # Extract filename from path
+            name = Path(file_path).name
+            artifacts.append(Artifact(
+                name=name,
+                type="file",
+                path=file_path,
+                content=None,  # Content is on disk, not in XML
+                action=action
+            ))
+
+        # Legacy format fallback: <artifact name="..." type="...">content</artifact>
+        # Only use if no path-based artifacts found
+        if not artifacts:
+            legacy_pattern = re.compile(
+                r'<artifact\s+name=["\'](.*?)["\']\s+type=["\'](.*?)["\']\s*>(.*?)</artifact>', re.DOTALL
+            )
+            for match in legacy_pattern.finditer(text):
+                name, type_, content = match.groups()
+                artifacts.append(Artifact(name=name, type=type_, content=content.strip()))
 
         # Extract next steps
         next_steps = []
