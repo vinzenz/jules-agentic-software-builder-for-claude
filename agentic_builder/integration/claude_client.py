@@ -88,7 +88,7 @@ class ClaudeClient:
         # - : Stdin (Context)
 
         # Use stdin for user input to avoid ARG_MAX limits with large context
-        cmd = ["claude", "-m", model.value, "-s", system_prompt, "-p", prompt, "-"]
+        cmd = ["claude", "--model", model.value, "--system-prompt", system_prompt, "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
 
         # Run Claude CLI in the project root directory so agents write files
         # to the correct location when using relative paths

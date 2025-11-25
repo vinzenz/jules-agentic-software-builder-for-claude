@@ -51,7 +51,7 @@ class AgentConfig(BaseModel):
 AGENT_CONFIGS_MAP = {
     AgentType.PM: AgentConfig(type=AgentType.PM, model_tier=ModelTier.OPUS, dependencies=[]),
     AgentType.ARCHITECT: AgentConfig(type=AgentType.ARCHITECT, model_tier=ModelTier.OPUS, dependencies=[AgentType.PM]),
-    AgentType.UIUX: AgentConfig(type=AgentType.UIUX, model_tier=ModelTier.SONNET, dependencies=[AgentType.PM]),
+    AgentType.UIUX: AgentConfig(type=AgentType.UIUX, model_tier=ModelTier.OPUS, dependencies=[AgentType.PM]),
     AgentType.TL_FRONTEND: AgentConfig(
         type=AgentType.TL_FRONTEND, model_tier=ModelTier.SONNET, dependencies=[AgentType.ARCHITECT, AgentType.UIUX]
     ),
