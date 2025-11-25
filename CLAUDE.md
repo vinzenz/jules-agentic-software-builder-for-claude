@@ -180,6 +180,9 @@ ruff check --fix .
 # Start a workflow
 agentic-builder run FULL_APP_GENERATION
 
+# Start a workflow with debug logging (see prompts and responses)
+agentic-builder --debug run FULL_APP_GENERATION
+
 # List sessions
 agentic-builder list
 agentic-builder list --all
@@ -201,10 +204,36 @@ agentic-builder resume <session-id>
 agentic-builder usage
 ```
 
+### Debug Logging
+
+Debug logging provides detailed visibility into:
+- **Prompts sent to Claude agents** (system prompts, task prompts, context XML)
+- **Responses received from agents** (raw output, parsed artifacts, next steps)
+- **Workflow operations** (agent spawning, task creation, file handling)
+- **Context serialization** (dependency data passed between agents)
+
+**Enable via CLI flag:**
+```bash
+agentic-builder --debug run FULL_APP_GENERATION
+# or
+agentic-builder -d run FULL_APP_GENERATION
+```
+
+**Enable via environment variable:**
+```bash
+export AMAB_DEBUG=1
+agentic-builder run FULL_APP_GENERATION
+```
+
+Debug logs are written to:
+- **Console (stderr):** Real-time output during execution
+- **Log files:** `.sessions/debug_logs/debug_<timestamp>.log`
+
 ### Environment Variables
 
 | Variable | Description |
 |----------|-------------|
+| `AMAB_DEBUG` | Set to `1` to enable debug logging (same as `--debug` flag) |
 | `AMAB_MOCK_CLAUDE_CLI` | Set to `1` to mock Claude CLI responses |
 | `AMAB_MOCK_GH_CLI` | Set to `1` to mock GitHub CLI (PR creation) |
 

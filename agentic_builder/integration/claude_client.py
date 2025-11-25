@@ -6,9 +6,13 @@ from pathlib import Path
 
 from agentic_builder.agents.configs import get_agent_config, get_agent_prompt
 from agentic_builder.agents.response_parser import ResponseParser
+from agentic_builder.common.logging_config import get_logger, log_separator, truncate_for_log
 from agentic_builder.common.types import AgentOutput, AgentType, ModelTier
 from agentic_builder.common.utils import get_project_root
 
+
+# Module logger
+logger = get_logger(__name__)
 
 # Default permission denies for agent security
 DEFAULT_PERMISSION_DENIES = [
@@ -23,6 +27,7 @@ DEFAULT_PERMISSION_DENIES = [
 class ClaudeClient:
     def __init__(self):
         self._local_claude_dir = None
+        logger.debug("ClaudeClient initialized")
 
     def _setup_local_claude_config(self, project_root: Path) -> Path:
         """
@@ -74,12 +79,29 @@ class ClaudeClient:
         return local_claude_dir
 
     def call_agent(self, agent_type: AgentType, prompt: str, user_input: str, model: ModelTier) -> AgentOutput:
+        log_separator(logger, f"AGENT CALL: {agent_type.value}")
+        logger.debug(f"Agent Type: {agent_type.value}")
+        logger.debug(f"Model Tier: {model.value}")
+
         if os.environ.get("AMAB_MOCK_CLAUDE_CLI") == "1":
-            return self._mock_response(agent_type)
+            logger.debug("MOCK MODE: Returning mock response (AMAB_MOCK_CLAUDE_CLI=1)")
+            mock_response = self._mock_response(agent_type)
+            logger.debug(f"Mock Response Summary: {mock_response.summary}")
+            return mock_response
 
         # Real implementation: Call `claude` CLI or API
         # Retrieve system prompt (Agent Identity/Purpose)
         system_prompt = get_agent_prompt(agent_type)
+
+        log_separator(logger, "SYSTEM PROMPT", char="-")
+        logger.debug(f"System Prompt:\n{truncate_for_log(system_prompt, max_length=5000)}")
+
+        log_separator(logger, "TASK PROMPT (-p)", char="-")
+        logger.debug(f"Task Prompt:\n{prompt}")
+
+        log_separator(logger, "USER INPUT (stdin context)", char="-")
+        logger.debug(f"User Input / Context XML:\n{truncate_for_log(user_input, max_length=5000)}")
+        logger.debug(f"User Input Length: {len(user_input)} characters")
 
         # Build Command:
         # -m: Model
@@ -90,18 +112,26 @@ class ClaudeClient:
         # Use stdin for user input to avoid ARG_MAX limits with large context
         cmd = ["claude", "--model", model.value, "--system-prompt", system_prompt, "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
 
+        log_separator(logger, "CLI COMMAND", char="-")
+        # Log command without full system prompt (it's logged above)
+        cmd_display = ["claude", "--model", model.value, "--system-prompt", "[SYSTEM_PROMPT]", "--dangerously-skip-permissions", "--tools", "default", "-p", prompt, "-"]
+        logger.debug(f"Command: {' '.join(cmd_display)}")
+
         # Run Claude CLI in the project root directory so agents write files
         # to the correct location when using relative paths
         project_root = get_project_root()
+        logger.debug(f"Working Directory: {project_root}")
 
         # Set up local .claude config directory with credentials and security settings
         local_claude_dir = self._setup_local_claude_config(project_root)
+        logger.debug(f"Claude Config Directory: {local_claude_dir}")
 
         # Create environment with CLAUDE_CONFIG_DIR pointing to local .claude
         env = os.environ.copy()
         env["CLAUDE_CONFIG_DIR"] = str(local_claude_dir)
 
         try:
+            logger.debug("Executing Claude CLI...")
             result = subprocess.run(
                 cmd,
                 input=user_input,
@@ -111,11 +141,39 @@ class ClaudeClient:
                 cwd=project_root,  # Ensure agent writes files relative to project root
                 env=env,  # Use local .claude config
             )
-            return ResponseParser.parse(result.stdout)
+
+            log_separator(logger, "RAW RESPONSE (stdout)", char="-")
+            logger.debug(f"Response Length: {len(result.stdout)} characters")
+            logger.debug(f"Raw Response:\n{truncate_for_log(result.stdout, max_length=10000)}")
+
+            if result.stderr:
+                log_separator(logger, "STDERR", char="-")
+                logger.debug(f"Stderr:\n{truncate_for_log(result.stderr, max_length=2000)}")
+
+            parsed_output = ResponseParser.parse(result.stdout)
+
+            log_separator(logger, "PARSED OUTPUT", char="-")
+            logger.debug(f"Success: {parsed_output.success}")
+            logger.debug(f"Summary: {parsed_output.summary}")
+            logger.debug(f"Artifacts: {len(parsed_output.artifacts)}")
+            for i, artifact in enumerate(parsed_output.artifacts):
+                logger.debug(f"  Artifact {i+1}: path={artifact.path}, action={artifact.action}, type={artifact.type}")
+            logger.debug(f"Next Steps: {parsed_output.next_steps}")
+            logger.debug(f"Warnings: {parsed_output.warnings}")
+            logger.debug(f"Metadata: {parsed_output.metadata}")
+
+            log_separator(logger, f"END AGENT CALL: {agent_type.value}")
+            return parsed_output
+
         except subprocess.CalledProcessError as e:
-            # Fallback or error
+            log_separator(logger, "CLI ERROR", char="!")
+            logger.error(f"Claude CLI failed with return code: {e.returncode}")
+            logger.error(f"Stderr: {truncate_for_log(e.stderr or '', max_length=2000)}")
+            logger.error(f"Stdout: {truncate_for_log(e.stdout or '', max_length=2000)}")
             return AgentOutput(success=False, summary=f"Claude CLI failed: {e.stderr}")
+
         except FileNotFoundError:
+            logger.error("Claude CLI executable not found. Ensure 'claude' is installed and in PATH.")
             return AgentOutput(success=False, summary="Claude CLI not found.")
 
     def _mock_response(self, agent_type: AgentType) -> AgentOutput:
