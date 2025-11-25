@@ -17,8 +17,6 @@ Performance:
 """
 
 import json
-import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -32,14 +30,15 @@ logger = get_logger(__name__)
 
 
 class ConfidenceLevel(str, Enum):
-    HIGH = "high"      # Proceed silently
+    HIGH = "high"  # Proceed silently
     MEDIUM = "medium"  # State decision, allow override
-    LOW = "low"        # Ask user
+    LOW = "low"  # Ask user
 
 
 @dataclass
 class SpawnRequest:
     """Request to spawn an agent."""
+
     agent: str
     reason: str
     priority: str = "required"
@@ -49,6 +48,7 @@ class SpawnRequest:
 @dataclass
 class SkipDecision:
     """Decision to skip an agent."""
+
     agent: str
     reason: str
 
@@ -56,6 +56,7 @@ class SkipDecision:
 @dataclass
 class UserQuestion:
     """Question to ask the user."""
+
     id: str
     question: str
     confidence: ConfidenceLevel
@@ -69,6 +70,7 @@ class UserQuestion:
 @dataclass
 class AgentDecision:
     """A decision made by an agent."""
+
     decision: str
     confidence: ConfidenceLevel
     reason: str
@@ -79,6 +81,7 @@ class AgentDecision:
 @dataclass
 class AgentOutput:
     """Parsed output from an agent."""
+
     summary: str
     artifacts: List[Dict[str, str]] = field(default_factory=list)
     decisions: List[AgentDecision] = field(default_factory=list)
@@ -197,10 +200,7 @@ class AdaptiveOrchestrator:
         self._save_manifest(manifest)
 
         # Get sub-agent type
-        subagent_type = self.AGENT_MAPPING.get(
-            agent_name,
-            f"main-{agent_name.lower().replace('_', '-')}"
-        )
+        subagent_type = self.AGENT_MAPPING.get(agent_name, f"main-{agent_name.lower().replace('_', '-')}")
 
         try:
             # Run the agent (via Claude CLI Task tool simulation)
@@ -232,9 +232,7 @@ class AdaptiveOrchestrator:
         # For now, return a minimal output
         return AgentOutput(summary=f"Completed {subagent_type}")
 
-    def _process_agent_output(
-        self, agent_name: str, output: AgentOutput
-    ) -> List[SpawnRequest]:
+    def _process_agent_output(self, agent_name: str, output: AgentOutput) -> List[SpawnRequest]:
         """Process agent output: handle questions, skips, and spawns."""
 
         # 1. Handle user questions
@@ -260,10 +258,7 @@ class AdaptiveOrchestrator:
         self._save_manifest(manifest)
 
         # 4. Return spawn requests (filtered by skips)
-        return [
-            spawn for spawn in output.spawn_next
-            if spawn.agent not in self.skipped_agents
-        ]
+        return [spawn for spawn in output.spawn_next if spawn.agent not in self.skipped_agents]
 
     def _handle_question(self, question: UserQuestion) -> str:
         """Handle a user question based on confidence level."""
@@ -319,7 +314,8 @@ class AdaptiveOrchestrator:
         """Show decision and allow quick override."""
         print(f"\n[{question.confidence.upper()}] {question.question}")
         print(f"Decision: {question.recommendation}")
-        print(f"Alternatives: {', '.join(o['value'] for o in question.options if o['value'] != question.recommendation)}")
+        alts = [o["value"] for o in question.options if o["value"] != question.recommendation]
+        print(f"Alternatives: {', '.join(alts)}")
         print(f"(Type alternative within {timeout}s to override, or wait to continue)")
 
         # Simple timeout implementation
@@ -348,9 +344,7 @@ class AdaptiveOrchestrator:
         manifest["decision_log"].append(entry)
         self._save_manifest(manifest)
 
-    def _get_parallel_batch(
-        self, pending: List[SpawnRequest]
-    ) -> List[SpawnRequest]:
+    def _get_parallel_batch(self, pending: List[SpawnRequest]) -> List[SpawnRequest]:
         """Get agents that can run in parallel (no dependencies on each other)."""
         # For now, simple approach: return first one
         # Could be smarter about parallelism based on agent dependencies
@@ -415,6 +409,7 @@ class AdaptiveOrchestrator:
     def _generate_session_id(self) -> str:
         """Generate a unique session ID."""
         import uuid
+
         return f"adaptive_{uuid.uuid4().hex[:8]}"
 
 
