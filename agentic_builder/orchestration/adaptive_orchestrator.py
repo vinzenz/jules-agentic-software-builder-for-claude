@@ -132,6 +132,46 @@ class AdaptiveOrchestrator:
         "CQR": "main-cqr",
     }
 
+    # Model mapping for each agent - determines which model to use per-agent
+    # Models: opus (deep reasoning), sonnet (balanced), haiku (fast execution)
+    AGENT_MODEL_MAPPING = {
+        # Main agents requiring deep reasoning use opus
+        "PM": "opus",
+        "main-pm": "opus",
+        "SR": "opus",
+        "main-sr": "opus",
+        # Architects use sonnet for balanced analysis
+        "architect-system": "sonnet",
+        "architect-frontend": "sonnet",
+        "architect-backend": "sonnet",
+        "architect-mobile": "sonnet",
+        "architect-data": "sonnet",
+        "architect-infrastructure": "sonnet",
+        # Tech leads use sonnet
+        "TL_UI_WEB": "sonnet",
+        "main-tl-ui-web": "sonnet",
+        "TL_CORE_API": "sonnet",
+        "main-tl-core-api": "sonnet",
+        # Developers use haiku for fast code generation
+        "DEV_UI_WEB": "haiku",
+        "main-dev-ui-web": "haiku",
+        "DEV_UI_MOBILE": "haiku",
+        "main-dev-ui-mobile": "haiku",
+        "DEV_CORE_API": "haiku",
+        "main-dev-core-api": "haiku",
+        "DEV_CORE_SYSTEMS": "haiku",
+        "main-dev-core-systems": "haiku",
+        "DEV_INTEGRATION_DATABASE": "haiku",
+        "main-dev-integration-database": "haiku",
+        # Test and quality agents use sonnet
+        "TEST": "sonnet",
+        "main-test": "sonnet",
+        "CQR": "sonnet",
+        "main-cqr": "sonnet",
+        "DOE": "sonnet",
+        "main-doe": "sonnet",
+    }
+
     def __init__(
         self,
         project_root: Path,
@@ -280,6 +320,29 @@ class AdaptiveOrchestrator:
         self._save_manifest(manifest)
         self._ensure_gitignore()
 
+    def _get_agent_model(self, agent_name: str) -> str:
+        """Get the model to use for a specific agent.
+
+        Args:
+            agent_name: The agent name (e.g., "PM", "main-pm", "architect-system")
+
+        Returns:
+            Model name (opus, sonnet, haiku). Defaults to haiku if not found.
+        """
+        model = self.AGENT_MODEL_MAPPING.get(agent_name)
+        if model:
+            return model
+
+        # Try with main- prefix
+        main_name = f"main-{agent_name.lower().replace('_', '-')}"
+        model = self.AGENT_MODEL_MAPPING.get(main_name)
+        if model:
+            return model
+
+        # Default to haiku for unknown agents (fast execution)
+        logger.debug(f"No model mapping for {agent_name}, defaulting to haiku")
+        return "haiku"
+
     def _run_agent(self, spawn: SpawnRequest) -> Optional[AgentOutput]:
         """Run a single agent and return its output."""
         agent_name = spawn.agent
@@ -335,22 +398,24 @@ When done, output your results in JSON format with these fields:
         if context:
             prompt += f"\nAdditional context: {json.dumps(context)}"
 
-        logger.info(f"Invoking agent: {subagent_type}")
+        # Get the model to use for this agent
+        model = self._get_agent_model(subagent_type)
+        logger.info(f"Invoking agent: {subagent_type} (model: {model})")
         logger.debug(f"Prompt: {prompt[:500]}...")
 
         # Use long-running session if available
         if self._cli_session and self._cli_session.is_running():
-            return self._invoke_agent_via_session(subagent_type, prompt)
+            return self._invoke_agent_via_session(subagent_type, prompt, model)
         else:
-            return self._invoke_agent_via_subprocess(subagent_type, prompt)
+            return self._invoke_agent_via_subprocess(subagent_type, prompt, model)
 
-    def _invoke_agent_via_session(self, subagent_type: str, prompt: str) -> AgentOutput:
+    def _invoke_agent_via_session(self, subagent_type: str, prompt: str, model: str) -> AgentOutput:
         """Invoke an agent via the long-running CLI session."""
-        logger.info(f"Using long-running session for agent: {subagent_type}")
+        logger.info(f"Using long-running session for agent: {subagent_type} (model: {model})")
 
         try:
-            # Send prompt to the session and get response
-            response = self._cli_session.send_prompt(prompt, timeout=600.0)
+            # Send prompt to the session and get response with specified model
+            response = self._cli_session.send_prompt(prompt, timeout=600.0, model=model)
 
             # Parse the output
             return self._parse_agent_output(subagent_type, response)
@@ -362,22 +427,24 @@ When done, output your results in JSON format with these fields:
             logger.error(f"Session error for {subagent_type}: {e}")
             # Fall back to subprocess mode
             logger.info("Falling back to subprocess mode")
-            return self._invoke_agent_via_subprocess(subagent_type, prompt)
+            return self._invoke_agent_via_subprocess(subagent_type, prompt, model)
         except Exception as e:
             logger.error(f"Error invoking agent {subagent_type} via session: {e}")
             return AgentOutput(summary=f"Error: {str(e)}")
 
-    def _invoke_agent_via_subprocess(self, subagent_type: str, prompt: str) -> AgentOutput:
+    def _invoke_agent_via_subprocess(self, subagent_type: str, prompt: str, model: str) -> AgentOutput:
         """Invoke an agent via a new subprocess (original method)."""
         import subprocess
 
-        logger.info(f"Using subprocess for agent: {subagent_type}")
+        logger.info(f"Using subprocess for agent: {subagent_type} (model: {model})")
 
         try:
-            # Call Claude CLI with the sub-agent
+            # Call Claude CLI with the sub-agent and specified model
             result = subprocess.run(
                 [
                     "claude",
+                    "--model",
+                    model,
                     "-p",
                     prompt,
                     "--allowedTools",

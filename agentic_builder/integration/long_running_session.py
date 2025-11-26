@@ -440,7 +440,7 @@ class LongRunningCLISession:
         self.project_root = Path(project_root)
         self.on_stream_event = on_stream_event
         self._running = False
-        self._model = "sonnet"
+        self._default_model = "haiku"  # Default to haiku for orchestration efficiency
 
         # Stream logger
         log_file = stream_log_file or (self.project_root / ".tasks" / "stream.log")
@@ -450,33 +450,34 @@ class LongRunningCLISession:
             pretty_output=pretty_output,
         )
 
-    def start(self, model: str = "sonnet") -> None:
+    def start(self, default_model: str = "haiku") -> None:
         """
         Start the session (initialize logging).
 
         Args:
-            model: Model to use (sonnet, opus, haiku)
+            default_model: Default model to use when not specified per-prompt (haiku recommended)
         """
         if self._running:
             logger.warning("Session already running")
             return
 
         logger.info(f"Starting long-running Claude CLI session in {self.project_root}")
-        self._model = model
+        self._default_model = default_model
         self._running = True
-        logger.info("Long-running CLI session started")
+        logger.info(f"Long-running CLI session started (default model: {default_model})")
 
     def is_running(self) -> bool:
         """Check if the session is running."""
         return self._running
 
-    def send_prompt(self, prompt: str, timeout: float = 600.0) -> str:
+    def send_prompt(self, prompt: str, timeout: float = 600.0, model: Optional[str] = None) -> str:
         """
         Send a prompt to Claude CLI and get the response with streaming.
 
         Args:
             prompt: The prompt to send
             timeout: Maximum time to wait for response (seconds)
+            model: Model to use for this prompt (opus, sonnet, haiku). If None, uses default.
 
         Returns:
             The complete response text
@@ -488,9 +489,12 @@ class LongRunningCLISession:
         if not self._running:
             raise RuntimeError("Session is not running. Call start() first.")
 
+        # Use provided model or fall back to default
+        effective_model = model or self._default_model
+
         # Log outgoing prompt
-        self.stream_logger.log_outgoing(prompt)
-        logger.debug(f"Sending prompt ({len(prompt)} chars)")
+        self.stream_logger.log_outgoing(prompt, {"model": effective_model})
+        logger.debug(f"Sending prompt ({len(prompt)} chars) with model: {effective_model}")
 
         # Prepare environment
         env = os.environ.copy()
@@ -503,7 +507,7 @@ class LongRunningCLISession:
         cmd = [
             "claude",
             "--model",
-            self._model,
+            effective_model,
             "--output-format",
             "stream-json",
             "--verbose",
@@ -514,7 +518,7 @@ class LongRunningCLISession:
             prompt,
         ]
 
-        logger.debug(f"Running CLI command: claude --model {self._model} -p <prompt>")
+        logger.debug(f"Running CLI command: claude --model {effective_model} -p <prompt>")
 
         # Start subprocess with streaming output
         process = subprocess.Popen(
@@ -644,6 +648,7 @@ class LongRunningCLISession:
         prompt: str,
         on_chunk: Optional[Callable[[str], None]] = None,
         timeout: float = 600.0,
+        model: Optional[str] = None,
     ) -> Iterator[StreamEvent]:
         """
         Send a prompt and yield streaming events.
@@ -652,6 +657,7 @@ class LongRunningCLISession:
             prompt: The prompt to send
             on_chunk: Optional callback for each text chunk
             timeout: Maximum time to wait
+            model: Model to use for this prompt (opus, sonnet, haiku). If None, uses default.
 
         Yields:
             StreamEvent objects as they arrive
@@ -659,8 +665,11 @@ class LongRunningCLISession:
         if not self._running:
             raise RuntimeError("Session is not running. Call start() first.")
 
+        # Use provided model or fall back to default
+        effective_model = model or self._default_model
+
         # Log outgoing prompt
-        self.stream_logger.log_outgoing(prompt)
+        self.stream_logger.log_outgoing(prompt, {"model": effective_model})
 
         # Prepare environment
         env = os.environ.copy()
@@ -673,7 +682,7 @@ class LongRunningCLISession:
         cmd = [
             "claude",
             "--model",
-            self._model,
+            effective_model,
             "--output-format",
             "stream-json",
             "--verbose",
