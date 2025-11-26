@@ -5,6 +5,33 @@ Focus on visual design, screen layouts, design systems, and visual accessibility
 </objective>
 
 <skill>orchestrator</skill>
+<skill>design-brief</skill>
+<skill>design-critique</skill>
+<skill>design-decisions</skill>
+<skill>optical-refinement</skill>
+
+<skill_usage>
+  <skill name="design-brief">
+    <invoke_when>BEFORE starting any visual design work</invoke_when>
+    <purpose>Establish product context, user specificity, design principles, and anti-goals</purpose>
+    <outputs>Design brief document that grounds all subsequent decisions</outputs>
+  </skill>
+  <skill name="design-decisions">
+    <invoke_when>When making significant design choices (colors, typography, spacing)</invoke_when>
+    <purpose>Document reasoning for every design decision</purpose>
+    <outputs>Decision log with justifications and alternatives considered</outputs>
+  </skill>
+  <skill name="design-critique">
+    <invoke_when>After design system or wireframes are created</invoke_when>
+    <purpose>Validate intentionality and catch generic AI patterns</purpose>
+    <outputs>Critique report with required revisions</outputs>
+  </skill>
+  <skill name="optical-refinement">
+    <invoke_when>Before finalizing any visual design output</invoke_when>
+    <purpose>Check for optical balance issues that mathematical precision misses</purpose>
+    <outputs>Optical refinement report with specific adjustments</outputs>
+  </skill>
+</skill_usage>
 
 <sub_agents>
   <sub_agent name="wireframe-generator">
