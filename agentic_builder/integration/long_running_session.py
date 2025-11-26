@@ -1,20 +1,21 @@
 """
 Long-running Claude CLI session for efficient multi-agent orchestration.
 
-Instead of spawning a new Claude CLI process for each agent, this module
-maintains a single persistent session that can handle multiple prompts.
+This module provides streaming output handling and centralized logging for
+Claude CLI invocations. Each prompt spawns a subprocess but output is streamed
+in real-time with unified logging.
 
 Key Benefits:
-- Single CLI startup overhead (not 40+)
-- Streaming output with real-time logging
+- Real-time streaming output with progress visibility
+- Centralized logging of all messages to/from Claude
+- Structured event parsing from Claude CLI's stream-json format
 - Session state persistence across agent calls
-- Reduced memory and process overhead
 
 Usage:
     session = LongRunningCLISession(project_root)
     session.start()
 
-    # Send multiple prompts to the same session
+    # Send prompts with streaming output
     response = session.send_prompt("First agent task...")
     response = session.send_prompt("Second agent task...")
 
@@ -23,7 +24,6 @@ Usage:
 
 import json
 import os
-import queue
 import subprocess
 import sys
 import threading
@@ -196,15 +196,16 @@ class StreamLogger:
 
 class LongRunningCLISession:
     """
-    Maintains a long-running Claude CLI session for multi-agent orchestration.
+    Manages Claude CLI invocations with streaming output and centralized logging.
 
-    Instead of spawning a new process for each agent call, this class
-    maintains a single CLI process that handles multiple prompts in sequence.
-    All streamed messages are logged for debugging and transparency.
+    Each prompt spawns a new subprocess (Claude CLI requires -p flag), but output
+    is streamed in real-time and logged centrally for debugging and transparency.
+
+    This provides the benefits of:
+    - Real-time progress visibility
+    - Centralized logging across all agent calls
+    - Structured event parsing from streaming JSON
     """
-
-    # Delimiter for message boundaries in streaming mode
-    MESSAGE_DELIMITER = "\n---END_OF_RESPONSE---\n"
 
     def __init__(
         self,
@@ -224,13 +225,8 @@ class LongRunningCLISession:
         """
         self.project_root = Path(project_root)
         self.on_stream_event = on_stream_event
-
-        # Process state
-        self._process: Optional[subprocess.Popen] = None
-        self._stdout_queue: queue.Queue = queue.Queue()
-        self._stderr_queue: queue.Queue = queue.Queue()
-        self._reader_threads: List[threading.Thread] = []
         self._running = False
+        self._model = "sonnet"
 
         # Stream logger
         log_file = stream_log_file or (self.project_root / ".tasks" / "stream.log")
@@ -239,13 +235,9 @@ class LongRunningCLISession:
             log_to_console=log_to_console,
         )
 
-        # Response accumulator
-        self._current_response: List[str] = []
-        self._response_complete = threading.Event()
-
     def start(self, model: str = "sonnet") -> None:
         """
-        Start the Claude CLI process in conversation mode.
+        Start the session (initialize logging).
 
         Args:
             model: Model to use (sonnet, opus, haiku)
@@ -255,6 +247,35 @@ class LongRunningCLISession:
             return
 
         logger.info(f"Starting long-running Claude CLI session in {self.project_root}")
+        self._model = model
+        self._running = True
+        logger.info("Long-running CLI session started")
+
+    def is_running(self) -> bool:
+        """Check if the session is running."""
+        return self._running
+
+    def send_prompt(self, prompt: str, timeout: float = 600.0) -> str:
+        """
+        Send a prompt to Claude CLI and get the response with streaming.
+
+        Args:
+            prompt: The prompt to send
+            timeout: Maximum time to wait for response (seconds)
+
+        Returns:
+            The complete response text
+
+        Raises:
+            RuntimeError: If session is not running
+            TimeoutError: If response takes too long
+        """
+        if not self._running:
+            raise RuntimeError("Session is not running. Call start() first.")
+
+        # Log outgoing prompt
+        self.stream_logger.log_outgoing(prompt)
+        logger.debug(f"Sending prompt ({len(prompt)} chars)")
 
         # Prepare environment
         env = os.environ.copy()
@@ -262,24 +283,25 @@ class LongRunningCLISession:
         if local_claude_dir.exists():
             env["CLAUDE_CONFIG_DIR"] = str(local_claude_dir)
 
-        # Start Claude CLI in conversation mode with JSON streaming
-        # Using --output-format stream-json for parseable streaming output
+        # Build command with -p flag for non-interactive mode
         cmd = [
             "claude",
             "--model",
-            model,
+            self._model,
             "--output-format",
             "stream-json",
             "--dangerously-skip-permissions",
             "--allowedTools",
             "Task,Read,Write,Edit,Glob,Grep,Bash",
+            "-p",
+            prompt,
         ]
 
-        logger.debug(f"Starting CLI with command: {' '.join(cmd)}")
+        logger.debug(f"Running CLI command: claude --model {self._model} -p <prompt>")
 
-        self._process = subprocess.Popen(
+        # Start subprocess with streaming output
+        process = subprocess.Popen(
             cmd,
-            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -288,59 +310,53 @@ class LongRunningCLISession:
             bufsize=1,  # Line buffered
         )
 
-        self._running = True
+        # Collect response with streaming
+        response_parts: List[str] = []
+        start_time = time.time()
 
-        # Start reader threads
-        self._start_reader_threads()
+        try:
+            # Read stdout line by line for streaming
+            while True:
+                # Check timeout
+                if time.time() - start_time > timeout:
+                    process.kill()
+                    raise TimeoutError(f"Response not received within {timeout}s")
 
-        logger.info("Long-running CLI session started")
+                # Check if process has ended
+                if process.poll() is not None:
+                    # Process finished, read any remaining output
+                    remaining = process.stdout.read()
+                    if remaining:
+                        for line in remaining.strip().split("\n"):
+                            if line:
+                                self._process_output_line(line, response_parts)
+                    break
 
-    def _start_reader_threads(self) -> None:
-        """Start background threads to read stdout and stderr."""
+                # Read next line (with small timeout to allow checking process status)
+                line = process.stdout.readline()
+                if line:
+                    self._process_output_line(line.strip(), response_parts)
 
-        def read_stdout():
-            """Read stdout line by line."""
-            try:
-                while self._running and self._process and self._process.stdout:
-                    line = self._process.stdout.readline()
-                    if not line:
-                        if self._process.poll() is not None:
-                            break
-                        continue
+            # Check for errors
+            stderr = process.stderr.read()
+            if stderr:
+                self.stream_logger.log_incoming(stderr, {"source": "stderr"})
+                logger.debug(f"Stderr: {stderr[:500]}")
 
-                    self._stdout_queue.put(line)
-                    self._process_stdout_line(line)
+            if process.returncode != 0:
+                logger.warning(f"CLI exited with code {process.returncode}")
 
-            except Exception as e:
-                logger.error(f"Error reading stdout: {e}")
+        except Exception as e:
+            process.kill()
+            raise RuntimeError(f"Error during CLI execution: {e}") from e
 
-        def read_stderr():
-            """Read stderr line by line."""
-            try:
-                while self._running and self._process and self._process.stderr:
-                    line = self._process.stderr.readline()
-                    if not line:
-                        if self._process.poll() is not None:
-                            break
-                        continue
+        response = "".join(response_parts)
+        logger.debug(f"Received response ({len(response)} chars)")
 
-                    self._stderr_queue.put(line)
-                    self.stream_logger.log_incoming(line.strip(), {"source": "stderr"})
+        return response
 
-            except Exception as e:
-                logger.error(f"Error reading stderr: {e}")
-
-        stdout_thread = threading.Thread(target=read_stdout, daemon=True)
-        stderr_thread = threading.Thread(target=read_stderr, daemon=True)
-
-        stdout_thread.start()
-        stderr_thread.start()
-
-        self._reader_threads = [stdout_thread, stderr_thread]
-
-    def _process_stdout_line(self, line: str) -> None:
-        """Process a line from stdout, parsing streaming JSON."""
-        line = line.strip()
+    def _process_output_line(self, line: str, response_parts: List[str]) -> None:
+        """Process a single line of output, extracting content and logging events."""
         if not line:
             return
 
@@ -356,18 +372,27 @@ class LongRunningCLISession:
             if self.on_stream_event:
                 self.on_stream_event(event)
 
-            # Accumulate content for final response
+            # Extract text content from various event types
             if event.event_type == StreamEventType.CONTENT_DELTA:
-                content = data.get("delta", {}).get("text", "")
-                self._current_response.append(content)
+                # Content block delta
+                text = data.get("delta", {}).get("text", "")
+                if text:
+                    response_parts.append(text)
             elif event.event_type == StreamEventType.RESULT:
-                # Message complete
-                self._response_complete.set()
+                # Final result - extract from result field
+                result = data.get("result", "")
+                if result and not response_parts:
+                    response_parts.append(result)
+            elif "content" in data:
+                # Generic content field
+                content = data.get("content", "")
+                if isinstance(content, str) and content:
+                    response_parts.append(content)
 
         except json.JSONDecodeError:
-            # Non-JSON output, log as raw
+            # Non-JSON output, treat as raw text
             self.stream_logger.log_incoming(line, {"format": "raw"})
-            self._current_response.append(line)
+            response_parts.append(line)
 
     def _parse_stream_event(self, data: Dict[str, Any], raw_line: str) -> StreamEvent:
         """Parse a streaming JSON event into a StreamEvent."""
@@ -397,49 +422,6 @@ class LongRunningCLISession:
             raw_line=raw_line,
         )
 
-    def send_prompt(self, prompt: str, timeout: float = 600.0) -> str:
-        """
-        Send a prompt to the CLI and get the response.
-
-        Args:
-            prompt: The prompt to send
-            timeout: Maximum time to wait for response (seconds)
-
-        Returns:
-            The complete response text
-
-        Raises:
-            RuntimeError: If session is not running
-            TimeoutError: If response takes too long
-        """
-        if not self._running or not self._process:
-            raise RuntimeError("Session is not running. Call start() first.")
-
-        # Reset response state
-        self._current_response = []
-        self._response_complete.clear()
-
-        # Log outgoing prompt
-        self.stream_logger.log_outgoing(prompt)
-
-        # Send prompt to stdin
-        logger.debug(f"Sending prompt ({len(prompt)} chars)")
-        try:
-            self._process.stdin.write(prompt + "\n")
-            self._process.stdin.flush()
-        except BrokenPipeError:
-            raise RuntimeError("CLI process has terminated unexpectedly")
-
-        # Wait for response
-        if not self._response_complete.wait(timeout=timeout):
-            raise TimeoutError(f"Response not received within {timeout}s")
-
-        # Combine response
-        response = "".join(self._current_response)
-        logger.debug(f"Received response ({len(response)} chars)")
-
-        return response
-
     def send_and_stream(
         self,
         prompt: str,
@@ -457,96 +439,112 @@ class LongRunningCLISession:
         Yields:
             StreamEvent objects as they arrive
         """
-        if not self._running or not self._process:
+        if not self._running:
             raise RuntimeError("Session is not running. Call start() first.")
 
-        # Reset state
-        self._current_response = []
-        self._response_complete.clear()
-
-        # Log and send
+        # Log outgoing prompt
         self.stream_logger.log_outgoing(prompt)
 
-        try:
-            self._process.stdin.write(prompt + "\n")
-            self._process.stdin.flush()
-        except BrokenPipeError:
-            raise RuntimeError("CLI process has terminated unexpectedly")
+        # Prepare environment
+        env = os.environ.copy()
+        local_claude_dir = self.project_root / ".claude"
+        if local_claude_dir.exists():
+            env["CLAUDE_CONFIG_DIR"] = str(local_claude_dir)
 
-        # Yield events from queue
+        # Build command
+        cmd = [
+            "claude",
+            "--model",
+            self._model,
+            "--output-format",
+            "stream-json",
+            "--dangerously-skip-permissions",
+            "--allowedTools",
+            "Task,Read,Write,Edit,Glob,Grep,Bash",
+            "-p",
+            prompt,
+        ]
+
+        # Start subprocess
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=str(self.project_root),
+            env=env,
+            bufsize=1,
+        )
+
         start_time = time.time()
-        while not self._response_complete.is_set():
-            try:
+
+        try:
+            while True:
                 # Check timeout
-                elapsed = time.time() - start_time
-                if elapsed > timeout:
+                if time.time() - start_time > timeout:
+                    process.kill()
                     raise TimeoutError(f"Response not received within {timeout}s")
 
-                # Get next line with timeout
-                line = self._stdout_queue.get(timeout=1.0)
+                # Check if process ended
+                if process.poll() is not None:
+                    remaining = process.stdout.read()
+                    if remaining:
+                        for line in remaining.strip().split("\n"):
+                            if line:
+                                try:
+                                    data = json.loads(line)
+                                    event = self._parse_stream_event(data, line)
+                                    if on_chunk and event.event_type == StreamEventType.CONTENT_DELTA:
+                                        text = data.get("delta", {}).get("text", "")
+                                        if text:
+                                            on_chunk(text)
+                                    yield event
+                                except json.JSONDecodeError:
+                                    yield StreamEvent(
+                                        event_type=StreamEventType.SYSTEM,
+                                        timestamp=datetime.utcnow(),
+                                        raw_line=line,
+                                    )
+                    break
 
-                try:
-                    data = json.loads(line.strip())
-                    event = self._parse_stream_event(data, line)
+                # Read next line
+                line = process.stdout.readline()
+                if line:
+                    line = line.strip()
+                    try:
+                        data = json.loads(line)
+                        event = self._parse_stream_event(data, line)
+                        self.stream_logger.log_event(event)
 
-                    # Call chunk callback for content
-                    if on_chunk and event.event_type == StreamEventType.CONTENT_DELTA:
-                        content = data.get("delta", {}).get("text", "")
-                        if content:
-                            on_chunk(content)
+                        if on_chunk and event.event_type == StreamEventType.CONTENT_DELTA:
+                            text = data.get("delta", {}).get("text", "")
+                            if text:
+                                on_chunk(text)
 
-                    yield event
+                        yield event
+                    except json.JSONDecodeError:
+                        self.stream_logger.log_incoming(line, {"format": "raw"})
+                        yield StreamEvent(
+                            event_type=StreamEventType.SYSTEM,
+                            timestamp=datetime.utcnow(),
+                            raw_line=line,
+                        )
 
-                except json.JSONDecodeError:
-                    # Raw output
-                    yield StreamEvent(
-                        event_type=StreamEventType.SYSTEM,
-                        timestamp=datetime.utcnow(),
-                        raw_line=line,
-                    )
-
-            except queue.Empty:
-                continue
-
-    def is_running(self) -> bool:
-        """Check if the session is still running."""
-        if not self._process:
-            return False
-        return self._process.poll() is None
+        except Exception as e:
+            process.kill()
+            raise RuntimeError(f"Error during streaming: {e}") from e
 
     def stop(self) -> None:
-        """Stop the CLI session gracefully."""
+        """Stop the session and close logging."""
         if not self._running:
             return
 
         logger.info("Stopping long-running CLI session")
-
         self._running = False
-
-        # Close stdin to signal EOF
-        if self._process and self._process.stdin:
-            try:
-                self._process.stdin.close()
-            except Exception:
-                pass
-
-        # Wait for process to terminate
-        if self._process:
-            try:
-                self._process.wait(timeout=5.0)
-            except subprocess.TimeoutExpired:
-                logger.warning("Process did not terminate gracefully, killing...")
-                self._process.kill()
-                self._process.wait()
-
-        # Wait for reader threads
-        for thread in self._reader_threads:
-            thread.join(timeout=2.0)
 
         # Close logger
         self.stream_logger.close()
 
-        self._process = None
         logger.info("Long-running CLI session stopped")
 
     def __enter__(self) -> "LongRunningCLISession":
