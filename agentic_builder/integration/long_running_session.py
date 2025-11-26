@@ -284,12 +284,14 @@ class LongRunningCLISession:
             env["CLAUDE_CONFIG_DIR"] = str(local_claude_dir)
 
         # Build command with -p flag for non-interactive mode
+        # Note: --output-format stream-json requires --verbose
         cmd = [
             "claude",
             "--model",
             self._model,
             "--output-format",
             "stream-json",
+            "--verbose",
             "--dangerously-skip-permissions",
             "--allowedTools",
             "Task,Read,Write,Edit,Glob,Grep,Bash",
@@ -452,12 +454,14 @@ class LongRunningCLISession:
             env["CLAUDE_CONFIG_DIR"] = str(local_claude_dir)
 
         # Build command
+        # Note: --output-format stream-json requires --verbose
         cmd = [
             "claude",
             "--model",
             self._model,
             "--output-format",
             "stream-json",
+            "--verbose",
             "--dangerously-skip-permissions",
             "--allowedTools",
             "Task,Read,Write,Edit,Glob,Grep,Bash",
